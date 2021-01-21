@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class ParentAttributeInjector<T> : OdinPropertyProcessor<T> where T : ScriptableObject
+public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
 {
     private T parent;
     private T target;

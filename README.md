@@ -16,12 +16,16 @@ Copy the content of `Editor` to your Editor folder inside Unity.
 
 ## Known issues and tweakes
 ### Efficiency
-The attribute `[Parent]` only acts as tagger, which is then looked for in `ParentAttributeInjector:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
- ```csharp
- if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(ParentAttribute)))
+The attribute `[Parent]` only acts as tagger, which is then looked for in `ParentAttributeProcessor:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
+```csharp
+if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(ParentAttribute)))
     return;
- ```
-There is probably a way to direclty call `ParentAttributeInjector` from the attribute, but I haven't found how.
+```
+The problem with this is that `ParentAttributeProcessor` is thus set to be called for every `ScriptableObject`:
+```csharp
+public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
+```
+There is probably a way to direclty call `ParentAttributeProcessor` from the attribute, but I haven't found how.
 
 ### Selecting the parent object
 The selected parent should be of the exact same class as the overriden item (otherwise fields might be missing) and should not be the child itself.
