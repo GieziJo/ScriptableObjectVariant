@@ -1,5 +1,5 @@
 {
-    "name": "ch.giezi.tools.ScriptableObjectDataOverrider.editor",
+    "name": "ch.giezi.tools.ScriptableObjectVariant.editor",
     "rootNamespace": "",
     "references": [
         "GUID:6e24b47e76ea62f4bb81b0aae4434fc4"

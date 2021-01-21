@@ -1,10 +1,10 @@
 {
-    "name": "ch.giezi.tools.scriptableobjectdataoverrider",
-    "displayName": "Giezi's Scriptable Object Data Overrider",
+    "name": "ch.giezi.tools.scriptableobjectvariant",
+    "displayName": "Giezi's Scriptable Object Variant",
     "version": "0.0.0",
     "unity": "2020.2",
-    "description": "Adds a field to any scriptable object tagged with the [Parent] attribute that lets you select a parent and override selected fields in the child object.",
-    "keywords": ["Editor", "ScriptableObject"],
+    "description": "Adds a field to any scriptable object tagged with the [SOVariant] attribute that lets you select a parent and override selected fields in the child object.",
+    "keywords": ["Editor", "ScriptableObject", "Variant"],
     "category": "Editor",
     "type": "Editor"
 }
