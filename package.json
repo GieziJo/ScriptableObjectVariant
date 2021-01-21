@@ -1,7 +1,7 @@
 {
     "name": "ch.giezi.tools.scriptableobjectdataoverrider",
     "displayName": "Giezi's Scriptable Object Data Overrider",
-    "version": "21.01.21.0",
+    "version": "21.01.2100",
     "unity": "2020.2",
     "description": "Adds a field to any scriptable object tagged with the [Parent] attribute that lets you select a parent and override selected fields in the child object.",
     "keywords": ["Editor", "ScriptableObject"],
