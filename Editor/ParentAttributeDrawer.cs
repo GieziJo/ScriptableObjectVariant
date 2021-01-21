@@ -10,16 +10,33 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class ParentAttributeInjector : OdinPropertyProcessor<TestScriptable>
+public class ParentAttributeInjector<T> : OdinPropertyProcessor<T> where T : ScriptableObject
 {
-    private TestScriptable parent;
-    private TestScriptable target;
+    private T parent;
+    private T target;
     private AssetImporter _import;
     private List<string> overridden;
     private List<CheckBoxAttribute> _checkBoxAttributes;
 
-    void ParentSetter(TestScriptable parent)
+    void ParentSetter(T parent)
     {
+        if(target is null)
+            return;
+        if (parent)
+        {
+            if (parent.GetType() != target.GetType())
+            {
+                Debug.Log("Only equal types can be selected as parent");
+                return;
+            }
+
+            if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(target))
+            {
+                Debug.Log("You can't select the same object as parent");
+                return;
+            }
+        }
+
         this.parent = parent;
         _checkBoxAttributes = new List<CheckBoxAttribute>();
         SaveData();
@@ -28,6 +45,9 @@ public class ParentAttributeInjector : OdinPropertyProcessor<TestScriptable>
 
     public override void ProcessMemberProperties(List<InspectorPropertyInfo> propertyInfos)
     {
+        if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(ParentAttribute)))
+            return;
+        
         overridden = null;
 
         Selection.selectionChanged += OnSelectionChanged;
@@ -52,9 +72,10 @@ public class ParentAttributeInjector : OdinPropertyProcessor<TestScriptable>
             }
         }
         
-        propertyInfos.AddValue<TestScriptable>("Parent", () => parent, ParentSetter);
+        propertyInfos.AddValue<T>("Parent", () => parent, ParentSetter);
 
         InspectorPropertyInfo parentPropertyInfo = propertyInfos.Last();
+        
         
         propertyInfos.Insert(0, parentPropertyInfo);
         propertyInfos.RemoveAt(propertyInfos.Count - 1);
@@ -65,29 +86,36 @@ public class ParentAttributeInjector : OdinPropertyProcessor<TestScriptable>
 
     private void LoadData()
     {
-        Object targetObject = Property.Tree.UnitySerializedObject.targetObject;
-        target = (TestScriptable) targetObject;
-
-        string path = AssetDatabase.GetAssetPath(targetObject);
-        _import = AssetImporter.GetAtPath(path);
-
-        string data = _import.userData;
-
         try
         {
+            Object targetObject = Property.Tree.UnitySerializedObject.targetObject;
+            target = (T) targetObject;
+
+            string path = AssetDatabase.GetAssetPath(targetObject);
+            _import = AssetImporter.GetAtPath(path);
+        }
+        catch (Exception e)
+        {
+            return;
+        }
+        
+        if(target is null || _import is null)
+            return;
+        
+        try
+        {
+            string data = _import.userData;
             string[] datas = data.Split('*');
 
             byte[] parentDataStream = datas[0].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
             string parentPath = SerializationUtility.DeserializeValue<string>(parentDataStream, DataFormat.Binary);
-            parent = AssetDatabase.LoadAssetAtPath<TestScriptable>(parentPath);
+            parent = AssetDatabase.LoadAssetAtPath<T>(parentPath);
 
             byte[] overridesDataStream = datas[1].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
             overridden = SerializationUtility.DeserializeValue<List<string>>(overridesDataStream, DataFormat.Binary);
-            // overridden.ForEach(pair => Debug.Log(pair));
         }
         catch (Exception e)
         {
-            Debug.Log(e);
             parent = null;
             overridden = new List<string>();
         }
@@ -95,6 +123,9 @@ public class ParentAttributeInjector : OdinPropertyProcessor<TestScriptable>
 
     private void SaveData()
     {
+        if(_import is null)
+            return;
+        
         List<string> overriddenMembers = new List<string>();
         if (_checkBoxAttributes.Count > 0)
             overriddenMembers = _checkBoxAttributes.Where(attribute => attribute.IsOverriden)
@@ -126,10 +157,10 @@ public class CheckBoxAttribute : Attribute
 {
     public bool IsOverriden;
     public string Name;
-    public TestScriptable Parent;
-    public TestScriptable TargetObject;
+    public Object Parent;
+    public Object TargetObject;
 
-    public CheckBoxAttribute(string name, bool isOverriden, TestScriptable targetObject, TestScriptable parent)
+    public CheckBoxAttribute(string name, bool isOverriden, Object targetObject, Object parent)
     {
         this.IsOverriden = isOverriden;
         this.Name = name;
