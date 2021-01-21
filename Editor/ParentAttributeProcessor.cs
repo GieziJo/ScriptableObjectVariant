@@ -76,7 +76,7 @@ public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : Sc
                     new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
                         overridden.Contains(propertyInfo.GetMemberInfo().Name), target, parent);
                 _checkBoxAttributes.Add(checkBoxAttribute);
-                propertyInfo.GetEditableAttributesList().Add(new HideLabelAttribute());
+                // propertyInfo.GetEditableAttributesList().Add(new HideLabelAttribute());
                 propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                 propertyInfo.GetEditableAttributesList().Add(bxa);
                 // propertyInfo.GetEditableAttributesList().Add(new DisableIfAttribute( "@true" ));
@@ -197,14 +197,16 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         GUILayout.BeginHorizontal();
         
         Rect rect = EditorGUILayout.GetControlRect();
-        this.Attribute.IsOverriden = EditorGUI.Toggle(rect.Split(0,2), Attribute.Name, this.Attribute.IsOverriden);
+        this.Attribute.IsOverriden = EditorGUI.Toggle(rect.Split(0,2), label.text, this.Attribute.IsOverriden);
         if (!this.Attribute.IsOverriden)
         {
-            targetFieldInfo.SetValue(Attribute.TargetObject,
-                parentFieldInfo.GetValue(Attribute.Parent));
+            targetFieldInfo.SetValue(Attribute.TargetObject, parentFieldInfo.GetValue(Attribute.Parent));
         }
+
+        GUIContent noLabel = new GUIContent(label);
+        noLabel.text = "";
         
-        this.CallNextDrawer(label);
+        this.CallNextDrawer(noLabel);
 
         if (!this.Attribute.IsOverriden)
         {
