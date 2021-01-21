@@ -1,4 +1,15 @@
-﻿using System;
+﻿// ===============================
+// AUTHOR          : J. Giezendanner
+// CREATE DATE     : 20.01.2020
+// MODIFIED DATE   : 
+// PURPOSE         : Allows to create ScriptableObject variants
+// SPECIAL NOTES   : 
+// ===============================
+// Change History:
+//==================================
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
