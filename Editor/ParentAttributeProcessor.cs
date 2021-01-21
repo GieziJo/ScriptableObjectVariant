@@ -184,17 +184,24 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
     {
-        // base.DrawPropertyLayout(label);
+        BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                                 | BindingFlags.Static;
+        FieldInfo targetFieldInfo = GetFieldRecursively(Attribute.TargetObject.GetType(), Attribute.Name, bindFlags);
+        FieldInfo parentFieldInfo = GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name, bindFlags);
+        if (targetFieldInfo is null || parentFieldInfo is null)
+        {
+            this.CallNextDrawer(label);
+            return;
+        }
+        
         GUILayout.BeginHorizontal();
         
         Rect rect = EditorGUILayout.GetControlRect();
         this.Attribute.IsOverriden = EditorGUI.Toggle(rect.Split(0,2), Attribute.Name, this.Attribute.IsOverriden);
         if (!this.Attribute.IsOverriden)
         {
-            BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-                                     | BindingFlags.Static;
-            Attribute.TargetObject.GetType().GetField(Attribute.Name, bindFlags).SetValue(Attribute.TargetObject,
-                Attribute.Parent.GetType().GetField(Attribute.Name, bindFlags).GetValue(Attribute.Parent));
+            targetFieldInfo.SetValue(Attribute.TargetObject,
+                parentFieldInfo.GetValue(Attribute.Parent));
         }
         
         this.CallNextDrawer(label);
@@ -206,5 +213,17 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         }
 
         GUILayout.EndHorizontal();
+    }
+
+    FieldInfo GetFieldRecursively(Type type, string attributeName, BindingFlags bindFlags)
+    {
+        if (type == null)
+            return null;
+        FieldInfo fieldInfo = null;
+        fieldInfo = type.GetField(attributeName, bindFlags);
+        if (fieldInfo is null)
+            return GetFieldRecursively(type.BaseType, attributeName, bindFlags);
+        else
+            return fieldInfo;
     }
 }

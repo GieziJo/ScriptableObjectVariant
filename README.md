@@ -29,7 +29,7 @@ Add the line
 ```
 "ch.giezi.tools.scriptableobjectdataoverrider": "https://github.com/GieziJo/ScriptableObjectDataOverrider.git#master"
 ```
-to the file `Packages/manifest.json` under `dependencies`.
+to the file `Packages/manifest.json` under `dependencies`, or in the `Package Manager` add the link `https://github.com/GieziJo/ScriptableObjectDataOverrider.git#master` under `+ -> "Add package from git URL...`.
 
 ### Alternative
 Copy the content of `Editor` to your Editor folder inside Unity.
