@@ -21,7 +21,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
+public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
 {
     private T parent;
     private T target;
@@ -56,7 +56,7 @@ public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : Sc
 
     public override void ProcessMemberProperties(List<InspectorPropertyInfo> propertyInfos)
     {
-        if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(ParentAttribute)))
+        if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
             return;
         
         overridden = null;
@@ -66,7 +66,7 @@ public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : Sc
 
         LoadData();
 
-        BoxGroupAttribute bxa = new BoxGroupAttribute("Data", true, false, 2);
+        BoxGroupAttribute bxa = new BoxGroupAttribute("Scriptable Object Variant", true, false, 2);
 
         if (parent != null)
         {
@@ -83,7 +83,7 @@ public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : Sc
             }
         }
         
-        propertyInfos.AddValue<T>("Parent", () => parent, ParentSetter);
+        propertyInfos.AddValue<T>("Original", () => parent, ParentSetter);
 
         InspectorPropertyInfo parentPropertyInfo = propertyInfos.Last();
         

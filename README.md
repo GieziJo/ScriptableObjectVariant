@@ -1,15 +1,15 @@
-# Scriptable Object Data Overrider for Unity (Scriptable Object Variant)
+# Scriptable Object Variant for Unity (Scriptable Object Data Overrider)
 ## Description
-Adds a field to any scriptable object tagged with the `[Parent]` attribute that lets you select a parent and override selected fields in the child object.
+Adds a field to any scriptable object tagged with the `[SOVariant]` attribute that lets you select an original SO (parent) and override selected fields in the child object.
 
 ![Demo](https://media.giphy.com/media/CqxAViacRQvG5JQMsp/giphy.gif)
 
 ## Usage
-Add the tag `[Parent]` before the class header of any ScriptableObject class you want to be overridable.
+Add the tag `[SOVariant]` before the class header of any ScriptableObject class you want to be overridable, i.e. to be able to create a variant of.
 
 Example:
 ```csharp
-[Parent]
+[SOVariant]
 [CreateAssetMenu(menuName = "Create TestScriptable", fileName = "TestScriptable", order = 0)]
 public class TestScriptable : SerializedScriptableObject
 {
@@ -36,16 +36,16 @@ Copy the content of `Editor` to your Editor folder inside Unity.
 
 ## Known issues and tweakes
 ### Efficiency
-The attribute `[Parent]` only acts as tagger, which is then looked for in `ParentAttributeProcessor:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
+The attribute `[SOVariant]` only acts as tagger, which is then looked for in `SOVariantAttributeProcessor:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
 ```csharp
-if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(ParentAttribute)))
+if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
     return;
 ```
-The problem with this is that `ParentAttributeProcessor` is thus set to be called for every `ScriptableObject`:
+The problem with this is that `SOVariantAttributeProcessor` is thus set to be called for every `ScriptableObject`:
 ```csharp
-public class ParentAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
+public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
 ```
-There is probably a way to direclty call `ParentAttributeProcessor` from the attribute, but I haven't found how.
+There is probably a way to direclty call `SOVariantAttributeProcessor` from the attribute, but I haven't found how.
 
 ### Selecting the parent object
 The selected parent should be of the exact same class as the overriden item (otherwise fields might be missing) and should not be the child itself.
