@@ -2,7 +2,7 @@
 ## Description
 Adds a field to any scriptable object tagged with the `[SOVariant]` attribute that lets you select an original SO (parent) and override selected fields in the child object.
 
-<img src="https://media.giphy.com/media/YljKeHvCqrCj33nN5n/giphy.gif" width="100%">
+<img src="https://s2.gifyu.com/images/ScriptableObjectOverrideDemo.gif" width="100%">
 
 ## Usage
 Add the tag `[SOVariant]` before the class header of any ScriptableObject class you want to be overridable, i.e. to be able to create a variant of.
