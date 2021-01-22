@@ -29,11 +29,13 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
     private List<string> _overridden;
     private List<CheckBoxAttribute> _checkBoxAttributes;
     private bool _selectionChangedFlag = false;
+    private List<string> _children;
 
     void ParentSetter(T parent)
     {
         if(_target is null)
             return;
+        
         if (parent)
         {
             if (parent.GetType() != _target.GetType())
@@ -48,6 +50,11 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
                 return;
             }
         }
+
+        string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target));
+        if (_parent)
+            RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_parent)), targetGUID);
+        AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
         
         this._parent = parent;
         _checkBoxAttributes = new List<CheckBoxAttribute>();
@@ -68,7 +75,7 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
             _selectionChangedFlag = true;
         }
 
-        if (_overridden == null || _import == null)
+        if (_overridden == null || _import == null || _children == null)
         {
             _overridden = null;
             _checkBoxAttributes = new List<CheckBoxAttribute>();
@@ -125,21 +132,43 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
         try
         {
             string data = _import.userData;
-            string[] datas = data.Split('*');
-
-            byte[] parentDataStream = datas[0].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
-            string parentGUID = SerializationUtility.DeserializeValue<string>(parentDataStream, DataFormat.Binary);
-            
-            _parent = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(parentGUID));
-
-            byte[] overridesDataStream = datas[1].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
-            _overridden = SerializationUtility.DeserializeValue<List<string>>(overridesDataStream, DataFormat.Binary);
+            var extractedData = ExtractData(data);
+            _parent = extractedData.Item2;
+            _overridden = extractedData.Item3 ?? new List<string>();
+            _children = extractedData.Item4 ?? new List<string>();
         }
         catch (Exception e)
         {
             _parent = null;
             _overridden = new List<string>();
+            _children = new List<string>();
         }
+    }
+
+    private Tuple<string, T, List<string>, List<string>> ExtractData(string data)
+    {
+        string[] datas = data.Split('*');
+        if (datas.Length != 3)
+            return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
+
+        byte[] parentDataStream = datas[0].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
+        string parentGUID = SerializationUtility.DeserializeValue<string>(parentDataStream, DataFormat.Binary);
+
+        var parent = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(parentGUID));
+
+        byte[] overridesDataStream = datas[1].Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
+        var overridden = SerializationUtility.DeserializeValue<List<string>>(overridesDataStream, DataFormat.Binary);
+
+        var children = DeserializeChildrenData(datas[2]);
+
+        return new Tuple<string, T, List<string>, List<string>>(parentGUID, parent, overridden, children);
+    }
+
+    private static List<string> DeserializeChildrenData(string data)
+    {
+        byte[] childrenDataStream = data.Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
+        var children = SerializationUtility.DeserializeValue<List<string>>(childrenDataStream, DataFormat.Binary);
+        return children;
     }
 
     private void SaveData()
@@ -152,18 +181,121 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
             overriddenMembers = _checkBoxAttributes.Where(attribute => attribute.IsOverriden)
                 .Select(attribute => attribute.Name).ToList();
 
-        string overridesData = string.Join(",",
-            SerializationUtility.SerializeValue<List<string>>(overriddenMembers, DataFormat.Binary));
+        string overridesData = SerializeOverrideData(overriddenMembers);
 
-        string parentData = string.Join(",",
-            SerializationUtility.SerializeValue<string>(AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(_parent)).ToString(), DataFormat.Binary));
+        string parentData = SerializeParentData(_parent);
 
-        string data = parentData + "*" + overridesData;
+        PropagateValuesToChildren(_target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target)), ref _children, _import);
+        
+        string childrenData = SerializeChildrenData(_children);
+
+        string data = parentData + "*" + overridesData + "*" + childrenData;
 
         _import.userData = data;
         
         EditorUtility.SetDirty(_target);
         AssetDatabase.SaveAssets();
+    }
+
+    private string SerializeChildrenData(List<string> children)
+    {
+        return string.Join(",",
+            SerializationUtility.SerializeValue<List<string>>(children, DataFormat.Binary));
+    }
+
+    private string SerializeParentData(T parent)
+    {
+        return string.Join(",",
+            SerializationUtility.SerializeValue<string>(AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(parent)).ToString(), DataFormat.Binary));
+    }
+
+    private string SerializeOverrideData(List<string> overrides)
+    {
+        return string.Join(",",
+            SerializationUtility.SerializeValue<List<string>>(overrides, DataFormat.Binary));
+    }
+
+    private void PropagateValuesToChildren(T target, string targetGUID, ref List<string> children, AssetImporter importer)
+    {
+        bool childrenUpdated = false;
+        
+        foreach (string child in new List<string>(children))
+        {
+            string childPath = AssetDatabase.GUIDToAssetPath(child);
+            AssetImporter childImporter = AssetImporter.GetAtPath(childPath);
+            var extractedData = ExtractData(childImporter.userData);
+            
+            if(extractedData.Item1 == null || extractedData.Item2 == null || extractedData.Item3 == null || extractedData.Item4 == null)
+            {
+                children.Remove(child);
+                childrenUpdated = true;
+                continue;
+            }
+            
+            string parentGUID = extractedData.Item1;
+
+            if (parentGUID != targetGUID)
+            {
+                children.Remove(child);
+                childrenUpdated = true;
+                continue;
+            }
+            
+            List<string> overridden = extractedData.Item3;
+            T childObject = AssetDatabase.LoadAssetAtPath<T>(childPath);
+
+            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(target.GetType()))
+            {
+                if(overridden.Contains(fieldInfo.Name))
+                    continue;
+                object value = FieldInfoHelper.GetFieldRecursively(target.GetType(), fieldInfo.Name).GetValue(target);
+                FieldInfoHelper.GetFieldRecursively(childObject.GetType(), fieldInfo.Name).SetValue(childObject, value);
+            }
+            EditorUtility.SetDirty(childObject);
+
+
+            List<string> newChildrenList = extractedData.Item4;
+            if(newChildrenList.Count > 0)
+                PropagateValuesToChildren(childObject, AssetDatabase.AssetPathToGUID(childPath), ref newChildrenList, importer);
+        }
+
+        if (childrenUpdated)
+        {
+            WriteOnlyChildrenData(importer, children);
+        }
+    }
+
+    private void AddToChildrenData(AssetImporter importer, string newChild)
+    {
+        string[] data = importer.userData.Split('*');
+        if (data.Length != 3)
+        {
+            WriteOnlyChildrenData(importer, new List<string>(){newChild});
+            return;
+        }
+
+        List<string> children = DeserializeChildrenData(data[2]);
+        children.Add(newChild);
+        WriteOnlyChildrenData(importer, children);
+    }
+
+    private void RemoveFromChildrenData(AssetImporter importer, string oldChild)
+    {
+        string[] data = importer.userData.Split('*');
+        if(data.Length != 3)
+            return;
+        List<string> children = DeserializeChildrenData(data[2]);
+        children.Remove(oldChild);
+        WriteOnlyChildrenData(importer, children);
+    }
+
+    private void WriteOnlyChildrenData(AssetImporter importer, List<string> children)
+    {
+        string[] data = importer.userData.Split('*');
+        if(data.Length == 3)
+            importer.userData = data[0] + "*" + data[1] + "*" + SerializeChildrenData(children);
+        else
+            importer.userData = SerializeParentData(null) + "*" + SerializeOverrideData(new List<string>()) + "*" + SerializeChildrenData(children);
     }
 
 
@@ -195,10 +327,8 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
     {
-        BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-                                 | BindingFlags.Static;
-        FieldInfo targetFieldInfo = GetFieldRecursively(Attribute.TargetObject.GetType(), Attribute.Name, bindFlags);
-        FieldInfo parentFieldInfo = GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name, bindFlags);
+        FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.TargetObject.GetType(), Attribute.Name);
+        FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
         if (targetFieldInfo is null || parentFieldInfo is null)
         {
             this.CallNextDrawer(label);
@@ -248,15 +378,29 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         GUILayout.EndHorizontal();
     }
 
-    FieldInfo GetFieldRecursively(Type type, string attributeName, BindingFlags bindFlags)
+}
+
+
+internal static class FieldInfoHelper
+{
+    private static BindingFlags bindFlags = BindingFlags.Public | BindingFlags.NonPublic |
+                                            BindingFlags.Static | BindingFlags.Instance;
+    internal static FieldInfo GetFieldRecursively(Type type, string attributeName)
     {
         if (type == null)
             return null;
         FieldInfo fieldInfo = null;
         fieldInfo = type.GetField(attributeName, bindFlags);
         if (fieldInfo is null)
-            return GetFieldRecursively(type.BaseType, attributeName, bindFlags);
+            return GetFieldRecursively(type.BaseType, attributeName);
         else
             return fieldInfo;
+    }
+    
+    internal static IEnumerable<FieldInfo> GetAllFields(Type t)
+    {
+        if (t == null || t == typeof(ScriptableObject) || t == typeof(SerializedScriptableObject))
+            return Enumerable.Empty<FieldInfo>();
+        return t.GetFields(bindFlags).Concat(GetAllFields(t.BaseType));
     }
 }

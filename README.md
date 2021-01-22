@@ -2,6 +2,8 @@
 ## Description
 Adds a field to any scriptable object tagged with the `[SOVariant]` attribute that lets you select an original SO (parent) and override selected fields in the child object.
 
+When changing values in the original, values are automagically propagated to the children.
+
 <img src="https://s2.gifyu.com/images/ScriptableObjectOverrideDemo.gif" width="100%">
 
 ## Usage
@@ -36,11 +38,6 @@ to the file `Packages/manifest.json` under `dependencies`, or in the `Package Ma
 Copy the content of `Editor` to your Editor folder inside Unity.
 
 ## Known issues and tweakes to be made
-### Data propagation
-Right now, changing a value in the original does not automatically propagate the value to the variants.
-To update the variant, one has to select the variant and then the fields are automagically updated.
-
-Will have to look into automatic field propagation.
 
 ### Efficiency
 The attribute `[SOVariant]` only acts as tagger, which is then looked for in `SOVariantAttributeProcessor:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
