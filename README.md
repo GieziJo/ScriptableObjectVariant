@@ -45,7 +45,7 @@ The problem with this is that `SOVariantAttributeProcessor` is thus set to be ca
 ```csharp
 public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
 ```
-There is probably a way to direclty call `SOVariantAttributeProcessor` from the attribute, but I haven't found how.
+There is probably a way to directly call `SOVariantAttributeProcessor` from the attribute, but I haven't found how.
 
 ### Selecting the parent object
 The selected parent should be of the exact same class as the overriden item (otherwise fields might be missing) and should not be the child itself.
@@ -70,3 +70,6 @@ Adding `ReadOnlyAttribute` (_actually `DisableIfAttribute( "@true" )` because `R
 
 ### Data serialization (parent and overriden fields)
 As mentioned above, the serialized data is kept in `userData`, but is set with `_import.userData = *mySerializedDataString*`. This would override any other data that would come to this field from other scripts, might be an issue.
+
+### Saving Data
+Saving data to the `.meta` file occures when the asset is deselected (`Selection.selectionChanged += OnSelectionChanged;`). It would be better to tie this to the serialization and deserialization of the data itself, but unity does not seem to expose the process as a delegate (not sure?), so I haven't found a way to tap into this routine.
