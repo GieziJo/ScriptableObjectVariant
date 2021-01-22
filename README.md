@@ -10,12 +10,13 @@ Add the tag `[SOVariant]` before the class header of any ScriptableObject class 
 Example:
 ```csharp
 [SOVariant]
-[CreateAssetMenu(menuName = "Create TestScriptable", fileName = "TestScriptable", order = 0)]
-public class TestScriptable : SerializedScriptableObject
+[CreateAssetMenu(fileName = "TestScriptable", menuName = "Create new TestScriptable")]
+public class TestScriptable : ScriptableObject
 {
-    public GameObject GameObject;
-    public float Size;
-    [SerializeField] private float secondSIze;
+    [SerializeField] private float myFloat = 3L;
+    [SerializeField] private GameObject myGameObject;
+    [SerializeField] private int myInt;
+    [SerializeField] private TestScriptable myTestScriptable;
 }
 ```
 
