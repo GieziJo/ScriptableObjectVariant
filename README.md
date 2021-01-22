@@ -35,7 +35,13 @@ to the file `Packages/manifest.json` under `dependencies`, or in the `Package Ma
 ### Alternative
 Copy the content of `Editor` to your Editor folder inside Unity.
 
-## Known issues and tweakes
+## Known issues and tweakes to be made
+### Data propagation
+Right now, changing a value in the original does not automatically propagate the value to the variants.
+To update the variant, one has to select the variant and then the fields are automagically updated.
+
+Will have to look into automatic field propagation.
+
 ### Efficiency
 The attribute `[SOVariant]` only acts as tagger, which is then looked for in `SOVariantAttributeProcessor:OdinPropertyProcessor -> ProcessMemberProperties`, where the first line reads:
 ```csharp
