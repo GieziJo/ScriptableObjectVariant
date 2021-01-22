@@ -30,7 +30,7 @@ Add the line
 ```
 "ch.giezi.tools.scriptableobjectvariant": "https://github.com/GieziJo/ScriptableObjectVariant.git#master"
 ```
-to the file `Packages/manifest.json` under `dependencies`, or in the `Package Manager` add the link `https://github.com/GieziJo/ScriptableObjectVariant.git#master` under `+ -> "Add package from git URL...`.
+to the file `Packages/manifest.json` under `dependencies`, or in the `Package Manager` add the link [`https://github.com/GieziJo/ScriptableObjectVariant.git#master`](https://github.com/GieziJo/ScriptableObjectVariant.git#master) under `+ -> "Add package from git URL...`.
 
 ### Alternative
 Copy the content of `Editor` to your Editor folder inside Unity.
