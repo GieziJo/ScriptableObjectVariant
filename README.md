@@ -69,9 +69,6 @@ if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(target))
  ```
 It would be alot better to directly filter the possible candidates when selecting in the object, but adding the `AssetSelector` attribute with a filter, or building a custom `ValueDropdown` both did not work, not sure why.
 
-### Making not overriden fields `ReadOnly`
-Adding `ReadOnlyAttribute` (_actually `DisableIfAttribute( "@true" )` because `ReadOnlyAttribute` did nothing ([bug?](https://bitbucket.org/sirenix/odin-inspector/issues/747/in-odinpropertyprocessor))_) to fields which are not overriden yielded in the checkbox being disabled. The workaround for now is a rect drawn ontop of the field, which "greys out" the field. Values can still be changed but reverse to the not overriden parent value when deselected.
-
 ### Data serialization (parent and overriden fields)
 As mentioned above, the serialized data is kept in `userData`, but is set with `_import.userData = *mySerializedDataString*`. This would override any other data that would come to this field from other scripts, might be an issue.
 

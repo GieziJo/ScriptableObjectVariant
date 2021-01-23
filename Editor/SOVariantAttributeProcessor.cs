@@ -87,14 +87,13 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
             if (_parent != null)
             {
                 foreach (InspectorPropertyInfo propertyInfo in new List<InspectorPropertyInfo>(propertyInfos))
-                {
+                {   
                     CheckBoxAttribute checkBoxAttribute =
                         new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
                             _overridden.Contains(propertyInfo.GetMemberInfo().Name), _target, _parent);
                     _checkBoxAttributes.Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(bxa);
-                    // propertyInfo.GetEditableAttributesList().Add(new DisableIfAttribute( "@true" ));
                 }
             }
 
@@ -223,6 +222,13 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
         {
             string childPath = AssetDatabase.GUIDToAssetPath(child);
             AssetImporter childImporter = AssetImporter.GetAtPath(childPath);
+            if(childImporter == null)
+            {
+                children.Remove(child);
+                childrenUpdated = true;
+                continue;
+            }
+            
             var extractedData = ExtractData(childImporter.userData);
             
             if(extractedData.Item1 == null || extractedData.Item2 == null || extractedData.Item3 == null || extractedData.Item4 == null)
@@ -327,6 +333,14 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
     {
+        GUI.enabled = Attribute.IsOverriden;
+        if (label is null)
+        {
+            this.CallNextDrawer(label);
+            GUI.enabled = true;
+            return;
+        }
+
         FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.TargetObject.GetType(), Attribute.Name);
         FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
         if (targetFieldInfo is null || parentFieldInfo is null)
@@ -341,8 +355,10 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         Rect subRect = new Rect(rect);
         if (Attribute.IsOverriden)
             subRect = subRect.Split(0, 2);
-        
+        // Debug.Log(label);
+        GUI.enabled = true;
         this.Attribute.IsOverriden = EditorGUI.ToggleLeft(subRect, label.text, this.Attribute.IsOverriden);
+        GUI.enabled = Attribute.IsOverriden;
         
         if (!this.Attribute.IsOverriden)
         {
@@ -364,20 +380,15 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             labelStyle.normal.textColor = new Color(.5f,.5f,.5f);
             labelStyle.alignment = TextAnchor.MiddleRight;
         
-            EditorGUI.LabelField(labelRect,parentFieldName, labelStyle);
+            EditorGUI.LabelField(labelRect, parentFieldName, labelStyle);
         }
 
+        
         this.CallNextDrawer(noLabel);
-
-        if (!this.Attribute.IsOverriden)
-        {
-            rect.x += rect.width;
-            EditorGUI.DrawRect(rect, new Color(.2f,.2f,.2f,.6f));
-        }
-
+        
         GUILayout.EndHorizontal();
+        GUI.enabled = true;
     }
-
 }
 
 
