@@ -320,13 +320,13 @@ public class CheckBoxAttribute : Attribute
     public bool IsOverriden;
     public string Name;
     public Object Parent;
-    public Object TargetObject;
+    public Object Target;
 
-    public CheckBoxAttribute(string name, bool isOverriden, Object targetObject, Object parent)
+    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent)
     {
         this.IsOverriden = isOverriden;
         this.Name = name;
-        this.TargetObject = targetObject;
+        this.Target = target;
         this.Parent = parent;
     }
 }
@@ -343,7 +343,7 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             return;
         }
 
-        FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.TargetObject.GetType(), Attribute.Name);
+        FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Target.GetType(), Attribute.Name);
         FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
         if (targetFieldInfo is null || parentFieldInfo is null)
         {
@@ -363,17 +363,17 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         
         if (!this.Attribute.IsOverriden)
         {
-            targetFieldInfo.SetValue(Attribute.TargetObject, parentFieldInfo.GetValue(Attribute.Parent));
+            targetFieldInfo.SetValue(Attribute.Target, parentFieldInfo.GetValue(Attribute.Parent));
         }
         else
         {
             // handle copy of list/arrays
-            if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) && targetFieldInfo.GetValue(Attribute.TargetObject) == parentFieldInfo.GetValue(Attribute.Parent))
+            if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) && targetFieldInfo.GetValue(Attribute.Target) == parentFieldInfo.GetValue(Attribute.Parent))
             {
                 object parentObject = parentFieldInfo.GetValue(Attribute.Parent);
                 byte[] parentAsData = SerializationUtility.SerializeValueWeak(parentObject, DataFormat.Binary);
                 object parentObjectCopy = SerializationUtility.DeserializeValueWeak(parentAsData, DataFormat.Binary);
-                targetFieldInfo.SetValue(Attribute.TargetObject, parentObjectCopy);
+                targetFieldInfo.SetValue(Attribute.Target, parentObjectCopy);
             }
         }
 
