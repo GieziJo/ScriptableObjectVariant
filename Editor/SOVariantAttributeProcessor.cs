@@ -335,9 +335,9 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
     {
-        GUI.enabled = Attribute.IsOverriden;
         if (label is null)
         {
+            GUI.enabled = Attribute.IsOverriden;
             this.CallNextDrawer(label);
             GUI.enabled = true;
             return;
@@ -357,9 +357,7 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         Rect subRect = new Rect(rect);
         if (Attribute.IsOverriden)
             subRect = subRect.Split(0, 2);
-        GUI.enabled = true;
         this.Attribute.IsOverriden = EditorGUI.ToggleLeft(subRect, label.text, this.Attribute.IsOverriden);
-        GUI.enabled = Attribute.IsOverriden;
         
         if (!this.Attribute.IsOverriden)
         {
@@ -395,11 +393,11 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             EditorGUI.LabelField(labelRect, parentFieldName, labelStyle);
         }
 
-        
+        GUI.enabled = Attribute.IsOverriden;
         this.CallNextDrawer(noLabel);
+        GUI.enabled = true;
         
         GUILayout.EndHorizontal();
-        GUI.enabled = true;
     }
 }
 
