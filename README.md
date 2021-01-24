@@ -74,3 +74,4 @@ As mentioned above, the serialized data is kept in `userData`, but is set with `
 
 ### Saving Data
 Saving data to the `.meta` file occures when the asset is deselected (`Selection.selectionChanged += OnSelectionChanged;`). It would be better to tie this to the serialization and deserialization of the data itself, but unity does not seem to expose the process as a delegate (not sure?), so I haven't found a way to tap into this routine.
+At least checking when the editor recompiles should be possible.

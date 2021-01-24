@@ -10,9 +10,11 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Serialization;
@@ -355,7 +357,6 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         Rect subRect = new Rect(rect);
         if (Attribute.IsOverriden)
             subRect = subRect.Split(0, 2);
-        // Debug.Log(label);
         GUI.enabled = true;
         this.Attribute.IsOverriden = EditorGUI.ToggleLeft(subRect, label.text, this.Attribute.IsOverriden);
         GUI.enabled = Attribute.IsOverriden;
@@ -363,6 +364,17 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         if (!this.Attribute.IsOverriden)
         {
             targetFieldInfo.SetValue(Attribute.TargetObject, parentFieldInfo.GetValue(Attribute.Parent));
+        }
+        else
+        {
+            // handle copy of list/arrays
+            if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) && targetFieldInfo.GetValue(Attribute.TargetObject) == parentFieldInfo.GetValue(Attribute.Parent))
+            {
+                object parentObject = parentFieldInfo.GetValue(Attribute.Parent);
+                byte[] parentAsData = SerializationUtility.SerializeValueWeak(parentObject, DataFormat.Binary);
+                object parentObjectCopy = SerializationUtility.DeserializeValueWeak(parentAsData, DataFormat.Binary);
+                targetFieldInfo.SetValue(Attribute.TargetObject, parentObjectCopy);
+            }
         }
 
         GUIContent noLabel = new GUIContent(label);
