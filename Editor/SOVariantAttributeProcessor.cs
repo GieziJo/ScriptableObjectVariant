@@ -92,15 +92,20 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
                 _otherSerializationBackend = new List<string>();
                 foreach (InspectorPropertyInfo propertyInfo in new List<InspectorPropertyInfo>(propertyInfos))
                 {   
-                    Debug.Log(propertyInfo);
-                    if(propertyInfo.SerializationBackend == SerializationBackend.None || propertyInfo.SerializationBackend == SerializationBackend.Odin)
+                    if (propertyInfo.SerializationBackend == SerializationBackend.None)
+                    {
                         _otherSerializationBackend.Add(propertyInfo.GetMemberInfo().Name);
+                        continue;
+                    }
+
                     CheckBoxAttribute checkBoxAttribute =
                         new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
                             _overridden.Contains(propertyInfo.GetMemberInfo().Name), _target, _parent);
                     _checkBoxAttributes.Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(bxa);
+                    // ? enable to debug
+                    // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                 }
             }
 
@@ -219,8 +224,6 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
     {
         if (_otherSerializationBackend != null && _otherSerializationBackend.Count > 0 && overrides.All(s => s != _otherSerializationBackend.First()))
             overrides.AddRange(_otherSerializationBackend);
-
-        overrides.ForEach(s => Debug.Log(s));
 
         return string.Join(",",
             SerializationUtility.SerializeValue<List<string>>(overrides, DataFormat.Binary));
@@ -341,6 +344,7 @@ public class CheckBoxAttribute : Attribute
     }
 }
 
+[DrawerPriority(0,0,2001)]
 public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
