@@ -73,5 +73,9 @@ It would be alot better to directly filter the possible candidates when selectin
 As mentioned above, the serialized data is kept in `userData`, but is set with `_import.userData = *mySerializedDataString*`. This would override any other data that would come to this field from other scripts, might be an issue.
 
 ### Saving Data
-Saving data to the `.meta` file occures when the asset is deselected (`Selection.selectionChanged += OnSelectionChanged;`). It would be better to tie this to the serialization and deserialization of the data itself, but unity does not seem to expose the process as a delegate (not sure?), so I haven't found a way to tap into this routine.
+Saving data to the `.meta` file occurs when the asset is deselected (`Selection.selectionChanged += OnSelectionChanged;`). It would be better to tie this to the serialization and deserialization of the data itself, but unity does not seem to expose the process as a delegate (not sure?), so I haven't found a way to tap into this routine.
 At least checking when the editor recompiles should be possible.
+
+### Fields serialized with backend Odin
+Fields serialized with the Odin backend are not displayed with the overridable checkbox (bug?).
+For now, these fields are added to the list of overridden fields such that when the user modifies them, they don't get set back to the parent's value.
