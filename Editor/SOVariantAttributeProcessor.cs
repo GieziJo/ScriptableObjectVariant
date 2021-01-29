@@ -105,7 +105,7 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
                     propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(bxa);
                     // ? enable to debug
-                    // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
+                    propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                 }
             }
 
