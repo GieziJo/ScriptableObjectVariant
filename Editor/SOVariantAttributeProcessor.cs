@@ -105,7 +105,7 @@ public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T :
                     propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                     propertyInfo.GetEditableAttributesList().Add(bxa);
                     // ? enable to debug
-                    propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
+                    // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                 }
             }
 
@@ -344,7 +344,7 @@ public class CheckBoxAttribute : Attribute
     }
 }
 
-[DrawerPriority(0,0,2001)]
+[DrawerPriority(0,0,3000)]
 public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
