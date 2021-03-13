@@ -27,43 +27,40 @@ namespace Giezi.Tools
 {
     public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
     {
-        private T _parent;
-        private T _target;
         private AssetImporter _import;
         private List<string> _overridden;
         private List<string> _otherSerializationBackend;
         private List<CheckBoxAttribute> _checkBoxAttributes;
         private bool _selectionChangedFlag = false;
-        private List<string> _children;
+        private SOVariant<T> _soVariant = null;
 
-        // private SOVariant<T> _soVariant = null;
 
         void ParentSetter(T parent)
         {
-            if(_target is null)
+            if(_soVariant._target is null)
                 return;
         
             if (parent)
             {
-                if (parent.GetType() != _target.GetType())
+                if (parent.GetType() != _soVariant._target.GetType())
                 {
                     Debug.Log("Only equal types can be selected as parent");
                     return;
                 }
 
-                if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(_target))
+                if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(_soVariant._target))
                 {
                     Debug.Log("You can't select the same object as parent");
                     return;
                 }
             }
 
-            string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target));
-            if (_parent)
-                RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_parent)), targetGUID);
+            string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_soVariant._target));
+            if (_soVariant._parent)
+                RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_soVariant._parent)), targetGUID);
             AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
         
-            this._parent = parent;
+            this._soVariant._parent = parent;
             _checkBoxAttributes = new List<CheckBoxAttribute>();
             SaveData();
             _overridden = null;
@@ -82,7 +79,10 @@ namespace Giezi.Tools
                 _selectionChangedFlag = true;
             }
 
-            if (_overridden == null || _import == null || _children == null)
+            if (_soVariant == null)
+                _soVariant = new SOVariant<T>();
+
+            if (_overridden == null || _import == null || _soVariant._children == null)
             {
                 _overridden = null;
                 _checkBoxAttributes = new List<CheckBoxAttribute>();
@@ -91,7 +91,7 @@ namespace Giezi.Tools
 
                 BoxGroupAttribute bxa = new BoxGroupAttribute("Scriptable Object Variant", true, false, 2);
 
-                if (_parent != null)
+                if (_soVariant._parent != null)
                 {
                     _otherSerializationBackend = new List<string>();
                     foreach (InspectorPropertyInfo propertyInfo in new List<InspectorPropertyInfo>(propertyInfos))
@@ -104,7 +104,7 @@ namespace Giezi.Tools
 
                         CheckBoxAttribute checkBoxAttribute =
                             new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
-                                _overridden.Contains(propertyInfo.GetMemberInfo().Name), _target, _parent);
+                                _overridden.Contains(propertyInfo.GetMemberInfo().Name), _soVariant._target, _soVariant._parent);
                         _checkBoxAttributes.Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(bxa);
@@ -113,7 +113,7 @@ namespace Giezi.Tools
                     }
                 }
 
-                propertyInfos.AddValue<T>("Original", () => _parent, ParentSetter);
+                propertyInfos.AddValue<T>("Original", () => _soVariant._parent, ParentSetter);
 
                 InspectorPropertyInfo parentPropertyInfo = propertyInfos.Last();
 
@@ -131,7 +131,7 @@ namespace Giezi.Tools
             try
             {
                 Object targetObject = Property.Tree.UnitySerializedObject.targetObject;
-                _target = (T) targetObject;
+                _soVariant._target = (T) targetObject;
 
                 string path = AssetDatabase.GetAssetPath(targetObject);
                 _import = AssetImporter.GetAtPath(path);
@@ -141,22 +141,22 @@ namespace Giezi.Tools
                 return;
             }
         
-            if(_target is null || _import is null)
+            if(_soVariant._target is null || _import is null)
                 return;
         
             try
             {
                 string data = _import.userData;
                 var extractedData = ExtractData(data);
-                _parent = extractedData.Item2;
+                _soVariant._parent = extractedData.Item2;
                 _overridden = extractedData.Item3 ?? new List<string>();
-                _children = extractedData.Item4 ?? new List<string>();
+                _soVariant._children = extractedData.Item4 ?? new List<string>();
             }
             catch (Exception e)
             {
-                _parent = null;
+                _soVariant._parent = null;
                 _overridden = new List<string>();
-                _children = new List<string>();
+                _soVariant._children = new List<string>();
             }
         }
 
@@ -198,17 +198,17 @@ namespace Giezi.Tools
 
             string overridesData = SerializeOverrideData(overriddenMembers);
 
-            string parentData = SerializeParentData(_parent);
+            string parentData = SerializeParentData(_soVariant._parent);
 
-            PropagateValuesToChildren(_target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target)), ref _children, _import);
+            PropagateValuesToChildren(_soVariant._target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_soVariant._target)), ref _soVariant._children, _import);
         
-            string childrenData = SerializeChildrenData(_children);
+            string childrenData = SerializeChildrenData(_soVariant._children);
 
             string data = parentData + "*" + overridesData + "*" + childrenData;
 
             _import.userData = data;
         
-            EditorUtility.SetDirty(_target);
+            EditorUtility.SetDirty(_soVariant._target);
             AssetDatabase.SaveAssets();
         }
 
