@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using UnityEngine.Animations;
 
-namespace GieziTools
+namespace Giezi.Tools
 {
     public static class SOVariantHelper<T>
     {

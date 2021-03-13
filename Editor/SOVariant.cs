@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace GieziTools
+namespace Giezi.Tools
 {
     public class SOVariant<T> where T : ScriptableObject
     {
