@@ -23,7 +23,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace GieziTools
+namespace Giezi.Tools
 {
     public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
     {
@@ -36,7 +36,7 @@ namespace GieziTools
         private bool _selectionChangedFlag = false;
         private List<string> _children;
 
-        private SOVariant<T> _soVariant = null;
+        // private SOVariant<T> _soVariant = null;
 
         void ParentSetter(T parent)
         {

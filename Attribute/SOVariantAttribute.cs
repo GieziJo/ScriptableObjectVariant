@@ -10,7 +10,7 @@
 
 using System;
 
-namespace GieziTools
+namespace Giezi.Tools
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class SOVariantAttribute : Attribute {}
