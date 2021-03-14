@@ -49,6 +49,11 @@ namespace Giezi.Tools
             return true;
         }
 
+        public void NotifyOverride(string variable)
+        {
+            
+        }
+
         public void LoadData(Object targetObject)
         {
             try

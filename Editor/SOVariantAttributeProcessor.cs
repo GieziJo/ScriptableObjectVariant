@@ -79,7 +79,7 @@ namespace Giezi.Tools
 
                         CheckBoxAttribute checkBoxAttribute =
                             new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
-                                _soVariant._overridden.Contains(propertyInfo.GetMemberInfo().Name), _soVariant._target, _soVariant._parent);
+                                _soVariant._overridden.Contains(propertyInfo.GetMemberInfo().Name), _soVariant._target, _soVariant._parent, _soVariant.NotifyOverride);
                         _checkBoxAttributes.Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(bxa);
@@ -117,20 +117,21 @@ namespace Giezi.Tools
     }
 }
 
-public class CheckBoxAttribute<T> : Attribute where T : ScriptableObject
+public class CheckBoxAttribute : Attribute
 {
     public bool IsOverriden;
     public string Name;
-    public SOVariant<T> _soVariant;
     public Object Parent;
     public Object Target;
+    public Action<string> Notifier;
 
-    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent, SOVariant<T> soVariant)
+    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent, Action<string> notifier)
     {
         this.IsOverriden = isOverriden;
         this.Name = name;
         this.Target = target;
         this.Parent = parent;
+        this.Notifier = notifier;
     }
 }
 
