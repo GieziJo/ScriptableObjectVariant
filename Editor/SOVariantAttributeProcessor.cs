@@ -117,14 +117,15 @@ namespace Giezi.Tools
     }
 }
 
-public class CheckBoxAttribute : Attribute
+public class CheckBoxAttribute<T> : Attribute where T : ScriptableObject
 {
     public bool IsOverriden;
     public string Name;
+    public SOVariant<T> _soVariant;
     public Object Parent;
     public Object Target;
 
-    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent)
+    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent, SOVariant<T> soVariant)
     {
         this.IsOverriden = isOverriden;
         this.Name = name;
