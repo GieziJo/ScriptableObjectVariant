@@ -156,17 +156,24 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             return;
         }
         
+        
         GUILayout.BeginHorizontal();
         
         Rect rect = EditorGUILayout.GetControlRect();
         Rect subRect = new Rect(rect);
         if (Attribute.IsOverriden)
             subRect = subRect.Split(0, 2);
-        this.Attribute.IsOverriden = EditorGUI.ToggleLeft(subRect, label.text, this.Attribute.IsOverriden);
+        bool newOverrideCommand = EditorGUI.ToggleLeft(subRect, label.text, this.Attribute.IsOverriden);
+        if (newOverrideCommand != this.Attribute.IsOverriden)
+        {
+            
+        }
         
         if (!this.Attribute.IsOverriden)
         {
-            targetFieldInfo.SetValue(Attribute.Target, parentFieldInfo.GetValue(Attribute.Parent));
+            var parentValue = parentFieldInfo.GetValue(Attribute.Parent);
+            if(targetFieldInfo.GetValue(Attribute.Target) != parentValue)
+                targetFieldInfo.SetValue(Attribute.Target, parentValue);
         }
         else
         {
