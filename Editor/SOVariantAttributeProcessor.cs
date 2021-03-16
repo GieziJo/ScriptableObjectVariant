@@ -29,7 +29,7 @@ namespace Giezi.Tools
     public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
     {
         // private List<CheckBoxAttribute> _checkBoxAttributes;
-        // private bool _selectionChangedFlag = false;
+        private bool _selectionChangedFlag = false;
         private SOVariant<T> _soVariant = null;
 
 
@@ -52,11 +52,11 @@ namespace Giezi.Tools
             if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
                 return;
 
-            // if (!_selectionChangedFlag)
-            // {
-            //     Selection.selectionChanged += OnSelectionChanged;
-            //     _selectionChangedFlag = true;
-            // }
+            if (!_selectionChangedFlag)
+            {
+                Selection.selectionChanged += OnSelectionChanged;
+                _selectionChangedFlag = true;
+            }
 
             if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
                 _soVariant = new SOVariant<T>(Property.Tree.UnitySerializedObject.targetObject);
@@ -112,18 +112,18 @@ namespace Giezi.Tools
         }
 
 
-        // private void OnSelectionChanged()
-        // {
-        //     Selection.selectionChanged -= OnSelectionChanged;
-        //     _selectionChangedFlag = false;
-        //     
-        //     List<string> overriddenMembers = new List<string>();
-        //     if (_checkBoxAttributes.Count > 0)
-        //         overriddenMembers = _checkBoxAttributes.Where(attribute => attribute.IsOverriden)
-        //             .Select(attribute => attribute.Name).ToList();
-        //     
-        //     _soVariant.SaveData(overriddenMembers);
-        // }
+        private void OnSelectionChanged()
+        {
+            Selection.selectionChanged -= OnSelectionChanged;
+            _selectionChangedFlag = false;
+            
+            // List<string> overriddenMembers = new List<string>();
+            // if (_checkBoxAttributes.Count > 0)
+            //     overriddenMembers = _checkBoxAttributes.Where(attribute => attribute.IsOverriden)
+            //         .Select(attribute => attribute.Name).ToList();
+            
+            _soVariant.SaveData(_soVariant._overridden);
+        }
     }
 }
 
