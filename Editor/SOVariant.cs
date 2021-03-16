@@ -101,14 +101,17 @@ namespace Giezi.Tools
 
         public void ChangeValue(string name, object value)
         {
+            if(!_parent)
+                Debug.Log("<color>Parent is not set</color>");
+            
             if(!_overridden.Contains(name))
                 Debug.Log("<color>Field is not overridden</color>");
+            
             var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
             if (targetFieldInfo.GetValue(_target) != value)
             {
                 targetFieldInfo.SetValue(_target, value);
-                EditorUtility.SetDirty(_target);
-                SaveData(_overridden);
+                SaveData(_overridden, new List<string>(){name});
             }
         }
 
@@ -181,7 +184,7 @@ namespace Giezi.Tools
             }
         }
 
-        public void SaveData(List<string> overriddenMembers)
+        public void SaveData(List<string> overriddenMembers, List<string> changedValues = null)
         {
             if(_import is null)
                 return;
@@ -189,9 +192,9 @@ namespace Giezi.Tools
             string overridesData = SerializeOverrideData(overriddenMembers);
 
             string parentData = SerializeParentData(_parent);
+            
+            PropagateValuesToChildren(_target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target)), ref _children, _import, changedValues);
 
-            PropagateValuesToChildren(_target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target)), ref _children, _import);
-        
             string childrenData = SerializeChildrenData(_children);
 
             string data = parentData + "*" + overridesData + "*" + childrenData;
@@ -223,8 +226,25 @@ namespace Giezi.Tools
                 SerializationUtility.SerializeValue<List<string>>(overrides, DataFormat.Binary));
         }
 
-        private void PropagateValuesToChildren(T target, string targetGUID, ref List<string> children, AssetImporter importer)
-        {
+        private void PropagateValuesToChildren(T target, string targetGUID, ref List<string> children, AssetImporter importer, List<string> changedValues)
+        { 
+            List<FieldInfo> fieldInfos = null;
+            if (children.Count > 0)
+            {
+
+                if (changedValues == null)
+                    fieldInfos = FieldInfoHelper.GetAllFields(_target.GetType()).ToList();
+                else
+                {
+                    fieldInfos = new List<FieldInfo>();
+                    foreach (string changedValue in changedValues)
+                    {
+                        FieldInfo info = FieldInfoHelper.GetFieldRecursively(_target.GetType(), changedValue);
+                        fieldInfos.Add(info);
+                    }
+                }
+            }
+
             bool childrenUpdated = false;
         
             foreach (string child in new List<string>(children))
@@ -259,7 +279,7 @@ namespace Giezi.Tools
                 List<string> overridden = extractedData.Item3;
                 T childObject = AssetDatabase.LoadAssetAtPath<T>(childPath);
                 bool childChanged = false;
-                foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(target.GetType()))
+                foreach (FieldInfo fieldInfo in fieldInfos)
                 {
                     if(overridden.Contains(fieldInfo.Name))
                         continue;
@@ -277,7 +297,7 @@ namespace Giezi.Tools
 
                 List<string> newChildrenList = extractedData.Item4;
                 if(newChildrenList.Count > 0)
-                    PropagateValuesToChildren(childObject, AssetDatabase.AssetPathToGUID(childPath), ref newChildrenList, importer);
+                    PropagateValuesToChildren(childObject, AssetDatabase.AssetPathToGUID(childPath), ref newChildrenList, importer, changedValues);
             }
 
             if (childrenUpdated)
@@ -286,7 +306,7 @@ namespace Giezi.Tools
             }
         }
 
-        public void AddToChildrenData(AssetImporter importer, string newChild)
+        private void AddToChildrenData(AssetImporter importer, string newChild)
         {
             string[] data = importer.userData.Split('*');
             if (data.Length != 3)

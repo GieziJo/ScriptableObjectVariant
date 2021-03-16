@@ -87,6 +87,8 @@ namespace Giezi.Tools
                         // _checkBoxAttributes.Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(bxa);
+                        
+                        // propertyInfo.GetMemberInfo().Module.GetField(propertyInfo.PropertyName).
                         // ! enable to debug
                         // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                     }
@@ -158,6 +160,7 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
         
         FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Target.GetType(), Attribute.Name);
         FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
+
         if (targetFieldInfo is null || parentFieldInfo is null)
         {
             this.CallNextDrawer(label);
