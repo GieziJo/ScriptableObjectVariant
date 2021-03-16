@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,12 +12,17 @@ namespace Giezi.Tools
 {
     public class SOVariant<T> where T : ScriptableObject
     {
-        public T _parent;
-        public T _target;
-        public AssetImporter _import;
-        public List<string> _overridden;
-        public List<string> _otherSerializationBackend;
-        public List<string> _children;
+        public T _parent = null;
+        public T _target = null;
+        public AssetImporter _import = null;
+        public List<string> _overridden = null;
+        public List<string> _otherSerializationBackend = null;
+        public List<string> _children = null;
+
+        public SOVariant(Object targetObject)
+        {
+            LoadData(targetObject);
+        }
 
         public bool SetParent(T parent)
         {
@@ -41,17 +47,69 @@ namespace Giezi.Tools
             string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target));
             if (_parent)
                 RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_parent)), targetGUID);
-            AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
-        
+            
             this._parent = parent;
+            
+            if (parent)
+            {
+                AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
+
+                InitialiseNewParent();
+            }
+
             SaveData(new List<string>());
             _overridden = null;
             return true;
         }
 
-        public void NotifyOverride(string variable)
+        public void NotifyOverrideChangeInState(string name, bool isOverriden)
         {
+            if (!_parent)
+            {
+                Debug.Log("<color>Parent needs to be defined first</color>");
+                return;
+            }
+            if (isOverriden)
+            {
+                if(!_overridden.Contains(name))
+                    _overridden.Add(name);
+                
+                var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
+                var parentFieldInfo = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), name);
+                // handle copy of list/arrays
+                if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) && targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_parent))
+                {
+                    object parentObject = parentFieldInfo.GetValue(_parent);
+                    byte[] parentAsData = SerializationUtility.SerializeValueWeak(parentObject, DataFormat.Binary);
+                    object parentObjectCopy = SerializationUtility.DeserializeValueWeak(parentAsData, DataFormat.Binary);
+                    targetFieldInfo.SetValue(_target, parentObjectCopy);
+                }
+            }
+            else if (!isOverriden)
+            {
+                if(_overridden.Contains(name))
+                    _overridden.Remove(name);
+                
+                var parentValue = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), name).GetValue(_parent);
+                var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
+                if(targetFieldInfo.GetValue(_target) != parentValue)
+                    targetFieldInfo.SetValue(_target, parentValue);
+            }
             
+            SaveData(_overridden);
+        }
+
+        public void ChangeValue(string name, object value)
+        {
+            if(!_overridden.Contains(name))
+                Debug.Log("<color>Field is not overridden</color>");
+            var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
+            if (targetFieldInfo.GetValue(_target) != value)
+            {
+                targetFieldInfo.SetValue(_target, value);
+                EditorUtility.SetDirty(_target);
+                SaveData(_overridden);
+            }
         }
 
         public void LoadData(Object targetObject)
@@ -112,6 +170,15 @@ namespace Giezi.Tools
             byte[] childrenDataStream = data.Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
             var children = SerializationUtility.DeserializeValue<List<string>>(childrenDataStream, DataFormat.Binary);
             return children;
+        }
+
+        private void InitialiseNewParent()
+        {
+            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
+            {
+                object value = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
+                FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).SetValue(_target, value);
+            }
         }
 
         public void SaveData(List<string> overriddenMembers)
@@ -191,15 +258,21 @@ namespace Giezi.Tools
             
                 List<string> overridden = extractedData.Item3;
                 T childObject = AssetDatabase.LoadAssetAtPath<T>(childPath);
-
+                bool childChanged = false;
                 foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(target.GetType()))
                 {
                     if(overridden.Contains(fieldInfo.Name))
                         continue;
                     object value = FieldInfoHelper.GetFieldRecursively(target.GetType(), fieldInfo.Name).GetValue(target);
-                    FieldInfoHelper.GetFieldRecursively(childObject.GetType(), fieldInfo.Name).SetValue(childObject, value);
+                    var childFieldInfo = FieldInfoHelper.GetFieldRecursively(childObject.GetType(), fieldInfo.Name);
+                    if (childFieldInfo.GetValue(childObject) != value)
+                    {
+                        childFieldInfo.SetValue(childObject, value);
+                        childChanged = true;
+                    }
                 }
-                EditorUtility.SetDirty(childObject);
+                if(childChanged)
+                    EditorUtility.SetDirty(childObject);
 
 
                 List<string> newChildrenList = extractedData.Item4;
