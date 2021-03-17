@@ -59,7 +59,7 @@ namespace Giezi.Tools
             }
 
             if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
-                _soVariant = new SOVariant<T>(Property.Tree.UnitySerializedObject.targetObject);
+                _soVariant = new SOVariant<T>((T)Property.Tree.UnitySerializedObject.targetObject);
                 // if (_soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null)
                 // {
                 //     _soVariant._overridden = null;
@@ -93,10 +93,6 @@ namespace Giezi.Tools
                         // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                     }
                 }
-
-                Debug.Log(propertyInfos);
-                Debug.Log(_soVariant);
-                Debug.Log(_soVariant._parent);
                 
                 propertyInfos.AddValue("Original", () => _soVariant._parent, ParentSetter);
 

@@ -8,6 +8,9 @@
 [Pp]lugins.meta
 [Tt]ests/
 [Tt]ests.meta
+[Tt]estEditor/
+[Tt]estEditor.meta
+
 #Assets/AssetStoreTools*
 
 

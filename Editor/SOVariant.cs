@@ -19,7 +19,7 @@ namespace Giezi.Tools
         public List<string> _otherSerializationBackend = null;
         public List<string> _children = null;
 
-        public SOVariant(Object targetObject)
+        public SOVariant(T targetObject)
         {
             LoadData(targetObject);
         }
@@ -101,10 +101,7 @@ namespace Giezi.Tools
 
         public void ChangeValue(string name, object value)
         {
-            if(!_parent)
-                Debug.Log("<color>Parent is not set</color>");
-            
-            if(!_overridden.Contains(name))
+            if(_parent && !_overridden.Contains(name))
                 Debug.Log("<color>Field is not overridden</color>");
             
             var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
@@ -115,12 +112,12 @@ namespace Giezi.Tools
             }
         }
 
-        public void LoadData(Object targetObject)
+        public void LoadData(T targetObject)
         {
             try
             {
          
-                _target = (T) targetObject;
+                _target = targetObject;
 
                 string path = AssetDatabase.GetAssetPath(targetObject);
                 _import = AssetImporter.GetAtPath(path);

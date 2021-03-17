@@ -22,6 +22,31 @@ public class TestScriptable : ScriptableObject
 }
 ```
 
+### Advanced usage in Editor Script
+A helper script has been implemented (`SOVariantHelper.cs`) which allows you to changed parents, override states and values from within other editor scripts.
+
+Set a new parent:
+```csharp
+ScriptableObject target = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/Tests/child.asset");
+ScriptableObject parent = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/Tests/parent.asset");
+        
+SOVariantHelper<ScriptableObject>.SetParent(target, parent);
+```
+
+Set a field overridable:
+```csharp
+ScriptableObject target = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/Tests/child.asset");
+        
+SOVariantHelper<ScriptableObject>.ChangeFieldOverrideState(target, "MyFloat", true);
+```
+
+Set a new value of a field (automatically propagates to children):
+```csharp
+ScriptableObject target = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/Tests/child.asset");
+        
+SOVariantHelper<ScriptableObject>.ChangeFieldValue(target, "MyFloat", 45f);
+```
+
 ## Implementation
 The whole routine is implemented in [Odin](odininspector.com/)'s [`OdinPropertyProcessor`](https://odininspector.com/tutorials/using-property-resolvers-and-attribute-processors/custom-property-processors). The data with the parent and the overriden fields is kept serialized inside the asset's metadata, set in unity with `AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(targetObject)).userData`.
 
@@ -75,3 +100,5 @@ As mentioned above, the serialized data is kept in `userData`, but is set with `
 ### Saving Data
 Saving data to the `.meta` file occurs when the asset is deselected (`Selection.selectionChanged += OnSelectionChanged;`). It would be better to tie this to the serialization and deserialization of the data itself, but unity does not seem to expose the process as a delegate (not sure?), so I haven't found a way to tap into this routine.
 At least checking when the editor recompiles should be possible.
+
+If the asset is not deselected in the editor before the editor reloads, the override changes are not saved.
