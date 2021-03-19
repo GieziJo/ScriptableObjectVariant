@@ -11,6 +11,8 @@ Add the tag `[SOVariant]` before the class header of any ScriptableObject class 
 
 Example:
 ```csharp
+using Giezi.Tools;
+
 [SOVariant]
 [CreateAssetMenu(fileName = "TestScriptable", menuName = "Create new TestScriptable")]
 public class TestScriptable : ScriptableObject
@@ -48,7 +50,8 @@ SOVariantHelper<ScriptableObject>.ChangeFieldValue(target, "MyFloat", 45f);
 ```
 
 ## Implementation
-The whole routine is implemented in [Odin](odininspector.com/)'s [`OdinPropertyProcessor`](https://odininspector.com/tutorials/using-property-resolvers-and-attribute-processors/custom-property-processors). The data with the parent and the overriden fields is kept serialized inside the asset's metadata, set in unity with `AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(targetObject)).userData`.
+The visual interface is implemented in [Odin](odininspector.com/)'s [`OdinPropertyProcessor`](https://odininspector.com/tutorials/using-property-resolvers-and-attribute-processors/custom-property-processors).
+The data with the parent and the overriden fields is kept serialized inside the asset's metadata, set in unity with `AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(targetObject)).userData`.
 
 ## Installation
 > Requires [Odin](odininspector.com/) to be installed
