@@ -65,8 +65,9 @@ to the file `Packages/manifest.json` under `dependencies`, or in the `Package Ma
 ### Alternative
 Copy the content of `Editor` to your Editor folder inside Unity.
 
+## Known issues and tweakes to be made
 <details>
-<summary><b>Known issues and tweakes to be made</b></summary>
+<summary>List of known issues</summary>
 
 
 ### [Efficiency](https://github.com/GieziJo/ScriptableObjectVariant/issues/2)
