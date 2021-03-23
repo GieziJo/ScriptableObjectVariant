@@ -65,7 +65,7 @@ to the file `Packages/manifest.json` under `dependencies`, or in the `Package Ma
 ### Alternative
 Copy the content of `Editor` to your Editor folder inside Unity.
 
-## Known issues and tweakes to be made
+## Known issues and tweaks to be made
 <details>
 <summary>List of known issues</summary>
 
