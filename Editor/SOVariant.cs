@@ -42,6 +42,12 @@ namespace Giezi.Tools
                     Debug.Log("You can't select the same object as parent");
                     return false;
                 }
+
+                if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(_parent))
+                {
+                    Debug.Log("Selected object is already target's parent");
+                    return false;
+                }
             }
 
             string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target));
