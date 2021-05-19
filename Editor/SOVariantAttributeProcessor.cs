@@ -2,7 +2,7 @@
 // AUTHOR          : J. Giezendanner
 // CREATE DATE     : 20.01.2020
 // MODIFIED DATE   : 
-// PURPOSE         : Allows to create ScriptableObject variants
+// PURPOSE         : Scriptable object variants inspector processor
 // SPECIAL NOTES   : 
 // ===============================
 // Change History:
@@ -10,15 +10,12 @@
 
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Giezi.Tools;
-using NUnit.Framework;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
-using Sirenix.Serialization;
 using Sirenix.Utilities;
 using UnityEditor;
 using UnityEngine;
@@ -34,11 +31,8 @@ namespace Giezi.Tools
 
         void ParentSetter(T parent)
         {
-            Debug.Log("got here");
             if(!_soVariant.SetParent(parent))
                 return;
-            
-            Debug.Log("got here2");
             
             _soVariant._overridden = null;
             Property.RefreshSetup();

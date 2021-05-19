@@ -1,4 +1,15 @@
-﻿using System;
+﻿// ===============================
+// AUTHOR          : J. Giezendanner
+// CREATE DATE     : 20.01.2020
+// MODIFIED DATE   : 
+// PURPOSE         : Scriptable object variant class
+// SPECIAL NOTES   : 
+// ===============================
+// Change History:
+//==================================
+
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +17,6 @@ using System.Reflection;
 using Sirenix.Serialization;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Giezi.Tools
 {
@@ -63,8 +73,8 @@ namespace Giezi.Tools
                 InitialiseNewParent();
             }
 
+            _overridden = new List<string>();
             SaveData(new List<string>());
-            _overridden = null;
             return true;
         }
 
@@ -133,9 +143,18 @@ namespace Giezi.Tools
                 return;
             }
             
-            if(_target is null || _import is null)
+            if(_target is null)
+            {
+                Debug.Log("<color=red>SOVariant: Target is null</color>");
                 return;
-                
+            }
+
+            if (_import is null)
+            {
+                Debug.Log("<color=red>SOVariant: Import is null</color>");
+                return;
+            }
+            
             try
             {
                 string data = _import.userData;

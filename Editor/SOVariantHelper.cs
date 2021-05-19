@@ -1,8 +1,17 @@
-﻿using System.Collections.Generic;
+﻿// ===============================
+// AUTHOR          : J. Giezendanner
+// CREATE DATE     : 13.03.2020
+// MODIFIED DATE   : 
+// PURPOSE         : Helper for scriptable object variants
+// SPECIAL NOTES   : 
+// ===============================
+// Change History:
+//==================================
+
+
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Animations;
-using Object = UnityEngine.Object;
 
 namespace Giezi.Tools
 {
@@ -30,8 +39,16 @@ namespace Giezi.Tools
             AssertIsSOVariant(target);
             
             SOVariant<T> soVariant = new SOVariant<T>(target);
-            soVariant.ChangeValue(name, value);
+            soVariant.ChangeValue(name, value);   
+        }
+
+        public static void SetFieldOverrideAndSetValue(T target, string name, object value)
+        {
+            AssertIsSOVariant(target);
             
+            SOVariant<T> soVariant = new SOVariant<T>(target);
+            soVariant.NotifyOverrideChangeInState(name, true);
+            soVariant.ChangeValue(name, value);   
         }
 
         public static void SetParentOverrideValue(T child, T parent, string name, object value)
