@@ -24,7 +24,7 @@ public class TestScriptable : ScriptableObject
 }
 ```
 
-## Create Scriptable Object Variant from context menu
+### Create Scriptable Object Variant from context menu
 
 ![Context Menu](https://raw.githubusercontent.com/GieziJo/ScriptableObjectVariant/assets/ContextMenuExample.png)
 
