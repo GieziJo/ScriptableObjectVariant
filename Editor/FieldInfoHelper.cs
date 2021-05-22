@@ -18,12 +18,12 @@ using UnityEngine;
 
 namespace Giezi.Tools
 {
-    internal static class FieldInfoHelper
+    public static class FieldInfoHelper
     {
         private static BindingFlags bindFlags = BindingFlags.Public | BindingFlags.NonPublic |
                                                 BindingFlags.Static | BindingFlags.Instance;
 
-        internal static FieldInfo GetFieldRecursively(Type type, string attributeName)
+        public static FieldInfo GetFieldRecursively(Type type, string attributeName)
         {
             if (type == null)
                 return null;
@@ -35,7 +35,7 @@ namespace Giezi.Tools
                 return fieldInfo;
         }
 
-        internal static IEnumerable<FieldInfo> GetAllFields(Type t)
+        public static IEnumerable<FieldInfo> GetAllFields(Type t)
         {
             if (t == null || t == typeof(ScriptableObject) || t == typeof(SerializedScriptableObject))
                 return Enumerable.Empty<FieldInfo>();
