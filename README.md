@@ -24,6 +24,13 @@ public class TestScriptable : ScriptableObject
 }
 ```
 
+## Create Scriptable Object Variant from context menu
+
+![Context Menu](https://raw.githubusercontent.com/GieziJo/ScriptableObjectVariant/assets/ContextMenuExample.png)
+
+In Unity, you can right click any scriptable object tagged `SOVariant` to create a variant of this object (`Create > Create SO Variant`).
+The new object will have the selected object as parent.
+
 ### Advanced usage in Editor Script
 A helper script has been implemented (`SOVariantHelper.cs`) which allows you to changed parents, override states and values from within other editor scripts.
 
