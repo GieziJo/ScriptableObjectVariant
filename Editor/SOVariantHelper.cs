@@ -10,8 +10,8 @@
 
 
 using System.Collections.Generic;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Giezi.Tools
 {
@@ -78,6 +78,6 @@ namespace Giezi.Tools
             }
         }
     
-        private static void AssertIsSOVariant(T obj) => Assert.IsTrue(obj.GetType().IsDefined(typeof(SOVariantAttribute), true));
+        internal static void AssertIsSOVariant(T obj) => Assert.IsTrue(obj.GetType().IsDefined(typeof(SOVariantAttribute), true));
     }
 }
