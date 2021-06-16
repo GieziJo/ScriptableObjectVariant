@@ -54,6 +54,13 @@ namespace Giezi.Tools
 
             if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
                 _soVariant = new SOVariant<T>((T)Property.Tree.UnitySerializedObject.targetObject);
+                if (!_soVariant.SoVariantProperlyLoaded)
+                {
+                    Selection.selectionChanged -= OnSelectionChanged;
+                    _selectionChangedFlag = false;
+
+                    AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
+                }
 
                 BoxGroupAttribute bxa = new BoxGroupAttribute("Scriptable Object Variant", true, false, 2);
 
