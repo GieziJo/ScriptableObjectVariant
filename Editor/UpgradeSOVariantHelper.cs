@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Sirenix.Serialization;
+using Sirenix.Utilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +15,12 @@ namespace Giezi.Tools
         [MenuItem("Tools/GieziTools/SOVariant/Upgrade user data to new version")]
         public static void UpgradeSOVariantUserData()
         {
-            IEnumerable<ScriptableObject> scriptableObjects = AssetDatabase.GetAllAssetPaths().Where(s => s.EndsWith(".asset") && s.StartsWith("Assets/")).Select(s => AssetDatabase.LoadAssetAtPath<ScriptableObject>(s)).Where(o => o.GetType().IsDefined(typeof(SOVariantAttribute), true));
+            IEnumerable<ScriptableObject> scriptableObjects =
+                AssetDatabase.GetAllAssetPaths()
+                    .Where(s => s.EndsWith(".asset") && s.StartsWith("Assets/"))
+                    .Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>)
+                    .Where(o => o != null)
+                    .Where(o => o.GetType().IsDefined(typeof(SOVariantAttribute), true));
 
             foreach (ScriptableObject scriptableObject in scriptableObjects)
             {
