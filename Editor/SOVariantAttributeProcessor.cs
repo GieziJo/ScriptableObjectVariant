@@ -58,8 +58,11 @@ namespace Giezi.Tools
                 {
                     Selection.selectionChanged -= OnSelectionChanged;
                     _selectionChangedFlag = false;
-
                     AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
+                    
+                    Selection.activeObject = null;
+                    
+                    return;
                 }
 
                 BoxGroupAttribute bxa = new BoxGroupAttribute("Scriptable Object Variant", true, false, 2);

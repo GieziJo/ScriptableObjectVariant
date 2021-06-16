@@ -22,6 +22,8 @@ namespace Giezi.Tools
                 
                 var extractedData = ExtractData(importer.userData);
                 var _parent = extractedData.Item1;
+                if(_parent == null)
+                    continue;
                 var _overridden = extractedData.Item3 ?? new List<string>();
                 var _children = extractedData.Item4 ?? new List<string>();
 

@@ -216,7 +216,6 @@ namespace Giezi.Tools
                     case (1):
                         Debug.Log($"UserData not overwritten.");
                         _SOVariantProperlyLoaded = false;
-                        Selection.activeObject = null;
                         return null;
                     case (2):
                         return ExtractData(ReadUpdatedMetaFile(data));
