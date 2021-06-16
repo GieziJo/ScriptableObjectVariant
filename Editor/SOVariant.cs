@@ -138,7 +138,7 @@ namespace Giezi.Tools
                 string path = AssetDatabase.GetAssetPath(targetObject);
                 _import = AssetImporter.GetAtPath(path);
             }
-            catch (Exception e)
+            catch
             {
                 return;
             }
@@ -163,7 +163,7 @@ namespace Giezi.Tools
                 _overridden = extractedData.Item3 ?? new List<string>();
                 _children = extractedData.Item4 ?? new List<string>();
             }
-            catch (Exception e)
+            catch
             {
                 _parent = null;
                 _overridden = new List<string>();

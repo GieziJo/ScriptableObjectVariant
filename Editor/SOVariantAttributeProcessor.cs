@@ -48,6 +48,8 @@ namespace Giezi.Tools
             {
                 Selection.selectionChanged += OnSelectionChanged;
                 _selectionChangedFlag = true;
+
+                AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReloads;
             }
 
             if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
@@ -91,9 +93,12 @@ namespace Giezi.Tools
             }
         }
 
+        private void OnBeforeAssemblyReloads() => OnSelectionChanged();
+
 
         private void OnSelectionChanged()
         {
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
             Selection.selectionChanged -= OnSelectionChanged;
             _selectionChangedFlag = false;
             
