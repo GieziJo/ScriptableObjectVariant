@@ -184,6 +184,8 @@ namespace Giezi.Tools
 
         private Tuple<string, T, List<string>, List<string>> ExtractData(string data)
         {
+            if(string.IsNullOrEmpty(data))
+                return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
             try
             {
                 string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
