@@ -17,13 +17,13 @@ namespace Giezi.Tools
 {
     public static class SOVariantHelper<T> where T : ScriptableObject
     {
-        public static bool SetParent(T child, T parent)
+        public static bool SetParent(T child, T parent, bool setToParentValue=true)
         {
             AssertIsSOVariant(parent);
             AssertIsSOVariant(child);
             
             SOVariant<T> soVariant = new SOVariant<T>(child);
-            return soVariant.SetParent(parent);
+            return soVariant.SetParent(parent, setToParentValue);
         }
 
         public static void ChangeFieldOverrideState(T target, string name, bool isOverridden)
@@ -51,25 +51,25 @@ namespace Giezi.Tools
             soVariant.ChangeValue(name, value);   
         }
 
-        public static void SetParentOverrideValue(T child, T parent, string name, object value)
+        public static void SetParentOverrideValue(T child, T parent, string name, object value, bool setToParentValue=true)
         {
             AssertIsSOVariant(parent);
             AssertIsSOVariant(child);
             
             SOVariant<T> soVariant = new SOVariant<T>(child);
-            soVariant.SetParent(parent);
+            soVariant.SetParent(parent, setToParentValue);
             
             soVariant.NotifyOverrideChangeInState(name, true);
             soVariant.ChangeValue(name, value);
         }
 
-        public static void SetParentOverrideValues(T child, T parent, Dictionary<string, object> values)
+        public static void SetParentOverrideValues(T child, T parent, Dictionary<string, object> values, bool setToParentValue=true)
         {
             AssertIsSOVariant(parent);
             AssertIsSOVariant(child);
             
             SOVariant<T> soVariant = new SOVariant<T>(child);
-            soVariant.SetParent(parent);
+            soVariant.SetParent(parent, setToParentValue);
 
             foreach (KeyValuePair<string, object> value in values)
             {

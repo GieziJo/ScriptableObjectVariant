@@ -31,7 +31,7 @@ namespace Giezi.Tools
 
         void ParentSetter(T parent)
         {
-            if(!_soVariant.SetParent(parent))
+            if(!_soVariant.SetParent(parent, false))
                 return;
             
             _soVariant._overridden = null;
