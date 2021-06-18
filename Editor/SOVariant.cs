@@ -78,7 +78,7 @@ namespace Giezi.Tools
                 AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
 
                 if (setToParentData)
-                    InitialiseNewParent();
+                    SetAllFieldsToParent();
                 else
                     InitialiseNewParentOverrides();
             }
@@ -235,13 +235,23 @@ namespace Giezi.Tools
             return children;
         }
 
-        private void InitialiseNewParent()
+        private void SetAllFieldsToParent()
         {
             foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
             {
                 object value = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
                 FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).SetValue(_target, value);
             }
+        }
+
+        public void ResetAllFieldsToParentValue()
+        {
+            List<string> oldOverrides = new List<string>(_overridden);
+            _overridden.Clear();
+            
+            SetAllFieldsToParent();
+            
+            SaveData(_overridden, oldOverrides);
         }
 
         private void InitialiseNewParentOverrides()
