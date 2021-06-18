@@ -40,9 +40,9 @@ namespace Giezi.Tools
             LoadData(targetObject);
         }
 
-        public bool SetParent(T parent)
+        public bool SetParent(T parent, bool setToParentData = true)
         {
-            if (_target is null)
+            if (_target == null)
                 return false;
 
             if (parent)
@@ -71,16 +71,19 @@ namespace Giezi.Tools
                 RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_parent)), targetGUID);
 
             this._parent = parent;
+            _overridden = new List<string>();
 
             if (parent)
             {
                 AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
 
-                InitialiseNewParent();
+                if (setToParentData)
+                    SetAllFieldsToParent();
+                else
+                    InitialiseNewParentOverrides();
             }
 
-            _overridden = new List<string>();
-            SaveData(new List<string>());
+            SaveData(_overridden);
             return true;
         }
 
@@ -232,12 +235,34 @@ namespace Giezi.Tools
             return children;
         }
 
-        private void InitialiseNewParent()
+        private void SetAllFieldsToParent()
         {
             foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
             {
                 object value = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
                 FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).SetValue(_target, value);
+            }
+        }
+
+        public void ResetAllFieldsToParentValue()
+        {
+            List<string> oldOverrides = new List<string>(_overridden);
+            _overridden.Clear();
+            
+            SetAllFieldsToParent();
+            
+            SaveData(_overridden, oldOverrides);
+        }
+
+        private void InitialiseNewParentOverrides()
+        {
+            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
+            {
+                object parentValue = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
+                object targetValue = FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).GetValue(_target);
+                
+                if(parentValue != targetValue)
+                    _overridden.Add(fieldInfo.Name);
             }
         }
 

@@ -31,7 +31,7 @@ namespace Giezi.Tools
 
         void ParentSetter(T parent)
         {
-            if(!_soVariant.SetParent(parent))
+            if(!_soVariant.SetParent(parent, false))
                 return;
             
             _soVariant._overridden = null;
@@ -69,6 +69,7 @@ namespace Giezi.Tools
 
                 if (_soVariant._parent != null)
                 {
+                    
                     _soVariant._otherSerializationBackend = new List<string>();
                     foreach (InspectorPropertyInfo propertyInfo in new List<InspectorPropertyInfo>(propertyInfos))
                     {
@@ -88,13 +89,23 @@ namespace Giezi.Tools
                         // ! enable to debug
                         // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                     }
+                
+                    propertyInfos.AddDelegate("Reset all values to Original", () =>
+                    {
+                        _soVariant.ResetAllFieldsToParentValue();
+                        _soVariant._overridden = null;
+                        Property.RefreshSetup();
+                    });
+
+                    var propertyButton = propertyInfos.Last();
+                    propertyInfos.Insert(0, propertyButton);
+                    propertyInfos.RemoveAt(propertyInfos.Count - 1);
+                    propertyButton.GetEditableAttributesList().Add(bxa);
                 }
                 
                 propertyInfos.AddValue("Original", () => _soVariant._parent, ParentSetter);
 
                 InspectorPropertyInfo parentPropertyInfo = propertyInfos.Last();
-
-
                 propertyInfos.Insert(0, parentPropertyInfo);
                 propertyInfos.RemoveAt(propertyInfos.Count - 1);
 
