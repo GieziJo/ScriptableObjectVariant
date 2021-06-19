@@ -1,3 +1,7 @@
+[![Releases](https://img.shields.io/github/release/GieziJo/ScriptableObjectVariant.svg)](https://github.com/GieziJo/ScriptableObjectVariant/releases/latest)
+[![openupm](https://img.shields.io/npm/v/ch.giezi.tools.scriptableobjectvariant?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/ch.giezi.tools.scriptableobjectvariant/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/GieziJo/ScriptableObjectVariant/blob/master/LICENSE.txt)
+
 # Scriptable Object Variant for Unity (Scriptable Object Data Overrider)
 ## Description
 Adds a field to any scriptable object tagged with the `[SOVariant]` attribute that lets you select an original SO (parent) and override selected fields in the child object.
@@ -85,7 +89,7 @@ The visual interface is implemented in [Odin](odininspector.com/)'s [`OdinProper
 The data with the parent and the overriden fields is kept serialized inside the asset's metadata, set in unity with `AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(targetObject)).userData`.
 
 ## Installation
-> Requires [Odin](odininspector.com/) to be installed
+> Requires [Odin](odininspector.com/) to be installed before adding the package
 ### Using Unity's package manager
 Add the line
 ```
@@ -93,8 +97,16 @@ Add the line
 ```
 to the file `Packages/manifest.json` under `dependencies`, or in the `Package Manager` add the link [`https://github.com/GieziJo/ScriptableObjectVariant.git#master`](https://github.com/GieziJo/ScriptableObjectVariant.git#master) under `+ -> "Add package from git URL...`.
 
+### Using OpenUPM
+The package is available on [OpenUPM](https://openupm.com/packages/ch.giezi.tools.scriptableobjectvariant/).
+OpenUPM packages can be installed in different ways:
+- via [OpenUPM CLI](https://github.com/openupm/openupm-cli): `openupm add ch.giezi.tools.scriptableobjectvariant`
+- by downloading the [`.unitypackage`](https://package-installer.glitch.me/v1/installer/OpenUPM/ch.giezi.tools.scriptableobjectvariant?registry=https%3A%2F%2Fpackage.openupm.com) and adding it to your project with `Assets > Import Package > Custom Package...`.
+
+the package will be added as a scoped registry, which you can inspect under `Project Settings > Package Manager > OpenUPM`.
+
 ### Alternative
-Copy the content of `Editor` to your Editor folder inside Unity.
+Download and copy all files inside your project.
 
 ## Known issues and tweaks to be made
 <details>
