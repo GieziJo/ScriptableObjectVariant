@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using Sirenix.Serialization;
 using UnityEditor;
 using UnityEngine;
+using SerializationUtility = Sirenix.Serialization.SerializationUtility;
 
 namespace Giezi.Tools
 {

@@ -6,6 +6,7 @@ using Sirenix.Serialization;
 using Sirenix.Utilities;
 using UnityEditor;
 using UnityEngine;
+using SerializationUtility = Sirenix.Serialization.SerializationUtility;
 
 namespace Giezi.Tools
 {
