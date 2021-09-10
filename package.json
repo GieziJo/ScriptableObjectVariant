@@ -5,10 +5,14 @@
         "name": "Jo Giezi",
         "url": "https://github.com/GieziJo/ScriptableObjectVariant"
     },
-    "version": "1.0.0",
+    "version": "1.0.1",
     "unity": "2020.2",
     "description": "Adds a field to any scriptable object tagged with the [SOVariant] attribute that lets you select a parent and override selected fields in the child object.",
-    "keywords": ["Editor", "ScriptableObject", "Variant"],
+    "keywords": [
+        "Editor",
+        "ScriptableObject",
+        "Variant"
+    ],
     "category": "Editor",
     "type": "Editor",
     "dependencies": {
