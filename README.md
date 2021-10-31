@@ -8,7 +8,7 @@ Adds a field to any scriptable object tagged with the `[SOVariant]` attribute th
 
 When changing values in the original, values are automagically propagated to the children.
 
-<img src="https://s2.gifyu.com/images/ScriptableObjectOverrideDemo.gif" width="100%">
+<img src="https://raw.githubusercontent.com/GieziJo/ScriptableObjectVariant/assets/ScriptableObjectOverrideDemo.gif" width="100%">
 
 ## Usage
 Add the tag `[SOVariant]` before the class header of any ScriptableObject class you want to be overridable, i.e. to be able to create a variant of.
