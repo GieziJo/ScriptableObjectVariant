@@ -1,7 +1,7 @@
 [![Releases](https://img.shields.io/github/release/GieziJo/ScriptableObjectVariant.svg)](https://github.com/GieziJo/ScriptableObjectVariant/releases/latest)
 [![openupm](https://img.shields.io/npm/v/ch.giezi.tools.scriptableobjectvariant?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/ch.giezi.tools.scriptableobjectvariant/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/GieziJo/ScriptableObjectVariant/blob/master/LICENSE.txt)
-[![twitter](https://img.shields.io/twitter/follow/_neonage?style=social)](https://twitter.com/JoGiezi)
+[![twitter](https://img.shields.io/twitter/follow/JoGiezi?style=social)](https://twitter.com/JoGiezi)
 
 # Scriptable Object Variant for Unity (Scriptable Object Data Overrider)
 ## Description
