@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.2](https://github.com/GieziJo/ScriptableObjectVariant/compare/v1.0.1...v1.0.2) (2021-11-14)
+
+
+### Bug Fixes
+
+* replace odin serialization with newtonsoft in SOVariant ([c40390e](https://github.com/GieziJo/ScriptableObjectVariant/commit/c40390e89531320f247a6975e6dcf899b1c8c85d))
+
 ### [1.0.1](https://github.com/GieziJo/ScriptableObjectVariant/compare/v1.0.0...v1.0.1) (2021-09-10)
 
 
