@@ -16,10 +16,8 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Sirenix.Serialization;
 using UnityEditor;
 using UnityEngine;
-using SerializationUtility = Sirenix.Serialization.SerializationUtility;
 
 namespace Giezi.Tools
 {
@@ -108,9 +106,8 @@ namespace Giezi.Tools
                     targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_parent))
                 {
                     object parentObject = parentFieldInfo.GetValue(_parent);
-                    byte[] parentAsData = SerializationUtility.SerializeValueWeak(parentObject, DataFormat.Binary);
                     object parentObjectCopy =
-                        SerializationUtility.DeserializeValueWeak(parentAsData, DataFormat.Binary);
+                        Clone(parentObject);
                     targetFieldInfo.SetValue(_target, parentObjectCopy);
                 }
             }
@@ -233,8 +230,9 @@ namespace Giezi.Tools
 
         private List<string> DeserializeChildrenData(string data)
         {
-            byte[] childrenDataStream = data.Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
-            var children = SerializationUtility.DeserializeValue<List<string>>(childrenDataStream, DataFormat.Binary);
+            // byte[] childrenDataStream = data.Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
+            // var children = SerializationUtility.DeserializeValue<List<string>>(childrenDataStream, DataFormat.Binary);
+            var children = JsonConvert.DeserializeObject<List<string>>(data);
             return children;
         }
 
@@ -506,6 +504,20 @@ namespace Giezi.Tools
             }
 
             return oldData;
+        }
+        
+        private T Clone<T>(T source)
+        {
+            var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings() {
+                // Use this option
+                //
+                // to ignore reference looping option
+                ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+                // Use this option when properties use an Interface as the type
+                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
+            };
+            var serialized = JsonConvert.SerializeObject(source, jsonSettings);
+            return JsonConvert.DeserializeObject<T>(serialized, jsonSettings);
         }
     }
 }
