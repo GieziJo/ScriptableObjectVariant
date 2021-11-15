@@ -231,7 +231,7 @@ namespace Giezi.Tools
                         _SOVariantProperlyLoaded = false;
                         return (null, null, null, null);;
                     case (2):
-                        return ExtractData(ReadUpdatedMetaFile(data));
+                        return ExtractData(ReadUpdatedMetaFile(data, AssetDatabase.GetAssetPath(_target), _import));
                 }
             }
             return (null, null, null, null);
@@ -436,7 +436,7 @@ namespace Giezi.Tools
                 {"childrenGUIDs", children}
             });
 
-            if (CheckForUserDataAndOverride(_import, _import.userData, data))
+            if (CheckForUserDataAndOverride(importer, importer.userData, data))
                 importer.userData = JsonConvert.SerializeObject(new Dictionary<string, string>()
                     {{"SOVariantData", data}});
         }
@@ -464,7 +464,7 @@ namespace Giezi.Tools
                 {
                     switch (EditorUtility.DisplayDialogComplex(
                         "Replace user data",
-                        $"While trying to save the SOVariant object \"{_target}\", a previous UserData entry " +
+                        $"While trying to save the SOVariant object \"{importer.assetPath}\", a previous UserData entry " +
                         $"was found which can not be loaded into a Json file: \"{importer.userData}\", conflicting with " +
                         $"saving the data at hand.\nWould you like to override it? " +
                         $"(Aborting will prevent the modified SOVariant data to be saved)\n\n" +
@@ -479,7 +479,7 @@ namespace Giezi.Tools
                             Debug.Log($"UserData in File \"{importer.assetPath}.meta\" not overwritten.");
                             return false;
                         case (2):
-                            string newOldData = ReadUpdatedMetaFile(oldData);
+                            string newOldData = ReadUpdatedMetaFile(oldData, importer.assetPath, importer);
                             return CheckForUserDataAndOverride(importer, newOldData, newData);
                     }
                 }
@@ -488,9 +488,9 @@ namespace Giezi.Tools
             return true;
         }
 
-        private string ReadUpdatedMetaFile(string oldData)
+        private string ReadUpdatedMetaFile(string oldData, string targetPath, AssetImporter importer)
         {
-            string[] lines = System.IO.File.ReadAllLines(AssetDatabase.GetAssetPath(_target) + ".meta");
+            string[] lines = System.IO.File.ReadAllLines(targetPath + ".meta");
             foreach (string line in lines)
             {
                 if (line.StartsWith("  userData: "))
