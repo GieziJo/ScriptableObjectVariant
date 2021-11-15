@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Giezi.Tools
@@ -37,7 +36,7 @@ namespace Giezi.Tools
 
         public static IEnumerable<FieldInfo> GetAllFields(Type t)
         {
-            if (t == null || t == typeof(ScriptableObject) || t == typeof(SerializedScriptableObject))
+            if (t == null || t == typeof(ScriptableObject))
                 return Enumerable.Empty<FieldInfo>();
             return t.GetFields(bindFlags).Concat(GetAllFields(t.BaseType));
         }
