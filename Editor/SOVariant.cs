@@ -106,8 +106,14 @@ namespace Giezi.Tools
                     targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_parent))
                 {
                     object parentObject = parentFieldInfo.GetValue(_parent);
-                    object parentObjectCopy =
-                        Clone(parentObject);
+                    
+                    var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings()
+                    {
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore, 
+                        TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
+                    };
+                    var serialized = JsonConvert.SerializeObject(parentObject, jsonSettings);
+                    object parentObjectCopy = JsonConvert.DeserializeObject<object>(serialized, jsonSettings);
                     targetFieldInfo.SetValue(_target, parentObjectCopy);
                 }
             }
@@ -168,9 +174,9 @@ namespace Giezi.Tools
             {
                 string data = _import.userData;
                 var extractedData = ExtractData(data);
-                _parent = extractedData.Item2;
-                _overridden = extractedData.Item3 ?? new List<string>();
-                _children = extractedData.Item4 ?? new List<string>();
+                _parent = extractedData.parent;
+                _overridden = extractedData.overridden ?? new List<string>();
+                _children = extractedData.children ?? new List<string>();
             }
             catch
             {
@@ -180,24 +186,28 @@ namespace Giezi.Tools
             }
         }
 
-        private Tuple<string, T, List<string>, List<string>> ExtractData(string data)
+        
+        private (string parentGUID, T parent, List<string> overridden, List<string>children) ExtractData(string data)
         {
-            if(string.IsNullOrEmpty(data))
-                return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
+            if(!CheckForDataString(data))
+                return (null, null, null, null);
             try
             {
-                string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
+                string dataJson = GetSOVariantData(data);
+                if(! CheckForDataString(dataJson))
+                    return (null, null, null, null);
                 Dictionary<string, string> containedData =
                     JsonConvert.DeserializeObject<Dictionary<string, string>>(dataJson);
 
                 string parentGUID = containedData["parentGUID"];
+                
                 var parent = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(parentGUID));
 
                 var overridden = JsonConvert.DeserializeObject<List<string>>(containedData["overriddenFields"]);
 
                 var children = JsonConvert.DeserializeObject<List<string>>(containedData["childrenGUIDs"]);
 
-                return new Tuple<string, T, List<string>, List<string>>(parentGUID, parent, overridden, children);
+                return (parentGUID, parent, overridden, children);
             }
             catch
             {
@@ -215,25 +225,27 @@ namespace Giezi.Tools
                     "Try again"))
                 {
                     case (0):
-                        return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
+                        return (null, null, null, null);
                     case (1):
                         Debug.Log($"UserData not overwritten.");
                         _SOVariantProperlyLoaded = false;
-                        return null;
+                        return (null, null, null, null);;
                     case (2):
                         return ExtractData(ReadUpdatedMetaFile(data));
                 }
             }
-
-            return null;
+            return (null, null, null, null);
         }
 
-        private List<string> DeserializeChildrenData(string data)
+        private static string GetSOVariantData(string data)
         {
-            // byte[] childrenDataStream = data.Split(',').ToList().Select(source => byte.Parse(source)).ToArray();
-            // var children = SerializationUtility.DeserializeValue<List<string>>(childrenDataStream, DataFormat.Binary);
-            var children = JsonConvert.DeserializeObject<List<string>>(data);
-            return children;
+            string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
+            return dataJson;
+        }
+
+        private bool CheckForDataString(string data)
+        {
+            return !string.IsNullOrEmpty(data) ;
         }
 
         private void SetAllFieldsToParent()
@@ -301,15 +313,15 @@ namespace Giezi.Tools
 
                 var extractedData = ExtractData(childImporter.userData);
 
-                if (extractedData.Item1 == null || extractedData.Item2 == null || extractedData.Item3 == null ||
-                    extractedData.Item4 == null)
+                if (extractedData.parentGUID == null || extractedData.parent == null || extractedData.overridden == null ||
+                    extractedData.children == null)
                 {
                     children.Remove(child);
                     childrenUpdated = true;
                     continue;
                 }
 
-                string parentGUID = extractedData.Item1;
+                string parentGUID = extractedData.parentGUID;
 
                 if (parentGUID != targetGUID)
                 {
@@ -318,7 +330,7 @@ namespace Giezi.Tools
                     continue;
                 }
 
-                List<string> overridden = extractedData.Item3;
+                List<string> overridden = extractedData.overridden;
                 T childObject = AssetDatabase.LoadAssetAtPath<T>(childPath);
                 bool childChanged = false;
                 foreach (FieldInfo fieldInfo in fieldInfos)
@@ -339,7 +351,7 @@ namespace Giezi.Tools
                     EditorUtility.SetDirty(childObject);
 
 
-                List<string> newChildrenList = extractedData.Item4;
+                List<string> newChildrenList = extractedData.children;
                 if (newChildrenList.Count > 0)
                     PropagateValuesToChildren(childObject, AssetDatabase.AssetPathToGUID(childPath),
                         ref newChildrenList, importer, changedValues);
@@ -353,36 +365,27 @@ namespace Giezi.Tools
 
         private void AddToChildrenData(AssetImporter importer, string newChild)
         {
-            string[] data = importer.userData.Split('*');
-            if (data.Length != 3)
-            {
-                WriteOnlyChildrenData(importer, new List<string>() {newChild});
-                return;
-            }
+            var extractedData = ExtractData(importer.userData);
 
-            List<string> children = DeserializeChildrenData(data[2]);
+            List<string> children = extractedData.children ?? new List<string>();
             children.Add(newChild);
-            WriteOnlyChildrenData(importer, children);
+            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
         }
 
         public void RemoveFromChildrenData(AssetImporter importer, string oldChild)
         {
-            string[] data = importer.userData.Split('*');
-            if (data.Length != 3)
-                return;
-            List<string> children = DeserializeChildrenData(data[2]);
+            var extractedData = ExtractData(importer.userData);
+
+            List<string> children = extractedData.children ?? new List<string>();
+            
             children.Remove(oldChild);
-            WriteOnlyChildrenData(importer, children);
+            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
         }
 
         private void WriteOnlyChildrenData(AssetImporter importer, List<string> children)
         {
-            string[] data = importer.userData.Split('*');
-            if (data.Length == 3)
-                WriteToImporter(importer, data[0], data[1], SerializeChildrenData(children));
-            else
-                WriteToImporter(importer, SerializeParentData(null), SerializeOverrideData(new List<string>()),
-                    SerializeChildrenData(children));
+            var extractedData = ExtractData(importer.userData);
+            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
         }
 
         public void SaveData(List<string> overriddenMembers, List<string> changedValues = null)
@@ -407,13 +410,11 @@ namespace Giezi.Tools
 
         private string SerializeChildrenData(List<string> children)
         {
-            // return string.Join(",", SerializationUtility.SerializeValue<List<string>>(children, DataFormat.Binary));
             return JsonConvert.SerializeObject(children);
         }
 
         private string SerializeParentData(T parent)
         {
-            // return string.Join(",", SerializationUtility.SerializeValue<string>(AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(parent)).ToString(), DataFormat.Binary));
             return AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(parent)).ToString();
         }
 
@@ -423,7 +424,6 @@ namespace Giezi.Tools
                 overrides.All(s => s != _otherSerializationBackend.First()))
                 overrides.AddRange(_otherSerializationBackend);
 
-            // return string.Join(",", SerializationUtility.SerializeValue<List<string>>(overrides, DataFormat.Binary));
             return JsonConvert.SerializeObject(overrides);
         }
 
@@ -504,20 +504,6 @@ namespace Giezi.Tools
             }
 
             return oldData;
-        }
-        
-        private T Clone<T>(T source)
-        {
-            var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings() {
-                // Use this option
-                //
-                // to ignore reference looping option
-                ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
-                // Use this option when properties use an Interface as the type
-                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
-            };
-            var serialized = JsonConvert.SerializeObject(source, jsonSettings);
-            return JsonConvert.DeserializeObject<T>(serialized, jsonSettings);
         }
     }
 }
