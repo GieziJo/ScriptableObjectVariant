@@ -106,8 +106,17 @@ namespace Giezi.Tools
                     targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_parent))
                 {
                     object parentObject = parentFieldInfo.GetValue(_parent);
-                    object parentObjectCopy =
-                        Clone(parentObject);
+                    
+                    var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings() {
+                        // Use this option
+                        //
+                        // to ignore reference looping option
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+                        // Use this option when properties use an Interface as the type
+                        TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
+                    };
+                    var serialized = JsonConvert.SerializeObject(parentObject, jsonSettings);
+                    object parentObjectCopy = JsonConvert.DeserializeObject<object>(serialized, jsonSettings);
                     targetFieldInfo.SetValue(_target, parentObjectCopy);
                 }
             }
@@ -182,11 +191,13 @@ namespace Giezi.Tools
 
         private Tuple<string, T, List<string>, List<string>> ExtractData(string data)
         {
-            if(string.IsNullOrEmpty(data))
+            if(!CheckForDataString(data))
                 return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
             try
             {
-                string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
+                string dataJson = GetSOVariantData(data);
+                if(! CheckForDataString(dataJson))
+                    return new Tuple<string, T, List<string>, List<string>>(null, null, null, null);
                 Dictionary<string, string> containedData =
                     JsonConvert.DeserializeObject<Dictionary<string, string>>(dataJson);
 
@@ -224,8 +235,18 @@ namespace Giezi.Tools
                         return ExtractData(ReadUpdatedMetaFile(data));
                 }
             }
-
             return null;
+        }
+
+        private static string GetSOVariantData(string data)
+        {
+            string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
+            return dataJson;
+        }
+
+        private bool CheckForDataString(string data)
+        {
+            return !string.IsNullOrEmpty(data) ;
         }
 
         private List<string> DeserializeChildrenData(string data)
@@ -353,6 +374,7 @@ namespace Giezi.Tools
 
         private void AddToChildrenData(AssetImporter importer, string newChild)
         {
+            Debug.Log(importer.userData);
             string[] data = importer.userData.Split('*');
             if (data.Length != 3)
             {
@@ -504,20 +526,6 @@ namespace Giezi.Tools
             }
 
             return oldData;
-        }
-        
-        private T Clone<T>(T source)
-        {
-            var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings() {
-                // Use this option
-                //
-                // to ignore reference looping option
-                ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
-                // Use this option when properties use an Interface as the type
-                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All
-            };
-            var serialized = JsonConvert.SerializeObject(source, jsonSettings);
-            return JsonConvert.DeserializeObject<T>(serialized, jsonSettings);
         }
     }
 }
