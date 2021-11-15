@@ -231,7 +231,7 @@ namespace Giezi.Tools
                         _SOVariantProperlyLoaded = false;
                         return (null, null, null, null);;
                     case (2):
-                        return ExtractData(ReadUpdatedMetaFile(data));
+                        return ExtractData(ReadUpdatedMetaFile(data, AssetDatabase.GetAssetPath(_target), _import));
                 }
             }
             return (null, null, null, null);
@@ -479,7 +479,7 @@ namespace Giezi.Tools
                             Debug.Log($"UserData in File \"{importer.assetPath}.meta\" not overwritten.");
                             return false;
                         case (2):
-                            string newOldData = ReadUpdatedMetaFile(oldData);
+                            string newOldData = ReadUpdatedMetaFile(oldData, importer.assetPath, importer);
                             return CheckForUserDataAndOverride(importer, newOldData, newData);
                     }
                 }
@@ -488,9 +488,9 @@ namespace Giezi.Tools
             return true;
         }
 
-        private string ReadUpdatedMetaFile(string oldData)
+        private string ReadUpdatedMetaFile(string oldData, string targetPath, AssetImporter importer)
         {
-            string[] lines = System.IO.File.ReadAllLines(AssetDatabase.GetAssetPath(_target) + ".meta");
+            string[] lines = System.IO.File.ReadAllLines(targetPath + ".meta");
             foreach (string line in lines)
             {
                 if (line.StartsWith("  userData: "))
