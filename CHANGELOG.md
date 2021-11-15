@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.4](https://github.com/GieziJo/ScriptableObjectVariant/compare/v1.0.3...v1.0.4) (2021-11-15)
+
+
+### Bug Fixes
+
+* target importer used instead of object importer in serialization ([0a62cd5](https://github.com/GieziJo/ScriptableObjectVariant/commit/0a62cd58596d9ddb6f378305e1bffa9401c5e17a))
+* update data path ([45cac7c](https://github.com/GieziJo/ScriptableObjectVariant/commit/45cac7c3326748d569454ea0402253f1fe081b0b))
+
 ### [1.0.3](https://github.com/GieziJo/ScriptableObjectVariant/compare/v1.0.2...v1.0.3) (2021-11-15)
 
 
