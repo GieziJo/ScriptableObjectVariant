@@ -436,7 +436,7 @@ namespace Giezi.Tools
                 {"childrenGUIDs", children}
             });
 
-            if (CheckForUserDataAndOverride(_import, _import.userData, data))
+            if (CheckForUserDataAndOverride(importer, importer.userData, data))
                 importer.userData = JsonConvert.SerializeObject(new Dictionary<string, string>()
                     {{"SOVariantData", data}});
         }
@@ -464,7 +464,7 @@ namespace Giezi.Tools
                 {
                     switch (EditorUtility.DisplayDialogComplex(
                         "Replace user data",
-                        $"While trying to save the SOVariant object \"{_target}\", a previous UserData entry " +
+                        $"While trying to save the SOVariant object \"{importer.assetPath}\", a previous UserData entry " +
                         $"was found which can not be loaded into a Json file: \"{importer.userData}\", conflicting with " +
                         $"saving the data at hand.\nWould you like to override it? " +
                         $"(Aborting will prevent the modified SOVariant data to be saved)\n\n" +
