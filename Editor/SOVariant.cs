@@ -403,7 +403,12 @@ namespace Giezi.Tools
             WriteToImporter(_import, parentData, overridesData, childrenData);
 
             EditorUtility.SetDirty(_target);
-            AssetDatabase.SaveAssets();
+            
+            // 17.02.22 mitay-walle: Performance / UX fix 
+            // Saving all assets without notification for user it's unnecessary performance slowdown. 
+            // In bigger projects it became a real problem
+            
+            //AssetDatabase.SaveAssets();
         }
 
         private string SerializeChildrenData(List<string> children)
