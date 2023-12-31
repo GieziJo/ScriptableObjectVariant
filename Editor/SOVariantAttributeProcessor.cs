@@ -50,15 +50,18 @@ namespace Giezi.Tools
                 _selectionChangedFlag = true;
 
                 AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReloads;
+                EditorApplication.playModeStateChanged += OnBeforeEnterPlayMode;
             }
 
             if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
                 _soVariant = new SOVariant<T>((T)Property.Tree.UnitySerializedObject.targetObject);
+                Debug.Log("still got here");
                 if (!_soVariant.SoVariantProperlyLoaded)
                 {
                     Selection.selectionChanged -= OnSelectionChanged;
                     _selectionChangedFlag = false;
                     AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
+                    EditorApplication.playModeStateChanged -= OnBeforeEnterPlayMode;
                     
                     Selection.activeObject = null;
                     
@@ -116,11 +119,18 @@ namespace Giezi.Tools
 
         private void OnBeforeAssemblyReloads() => OnSelectionChanged();
 
+        private void OnBeforeEnterPlayMode(PlayModeStateChange playModeStateChange)
+        {
+            if (playModeStateChange == PlayModeStateChange.ExitingEditMode)
+                OnSelectionChanged();
+        }
+
 
         private void OnSelectionChanged()
         {
             AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
             Selection.selectionChanged -= OnSelectionChanged;
+            EditorApplication.playModeStateChanged -= OnBeforeEnterPlayMode;
             _selectionChangedFlag = false;
             
             _soVariant.SaveData(_soVariant._overridden);

@@ -41,6 +41,7 @@ namespace Giezi.Tools
         {
             if (_target == null)
                 return false;
+            
 
             if (parent)
             {
@@ -388,7 +389,7 @@ namespace Giezi.Tools
 
         public void SaveData(List<string> overriddenMembers, List<string> changedValues = null)
         {
-            if (_import is null)
+            if (_import == null)
                 return;
 
             string overridesData = SerializeOverrideData(overriddenMembers);

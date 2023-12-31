@@ -8,8 +8,25 @@ namespace Giezi.Tools
 {
     public static class SOContextMenu
     {
-        private const string GieziToolsCreateSOvariantChildKey = "Giezi.Tools.CreateSoVariant.Child";
-        private const string GieziToolsCreateSOvariantParentKey = "Giezi.Tools.CreateSoVariant.Parent";
+        private static SOData _soData = null;
+
+        public static SOData SOData
+        {
+            get
+            {
+                if (_soData == null)
+                {
+                    Debug.Log(AssetDatabase.GUIDToAssetPath("50b31bd74d19a40b293ceaeefd1c650e"));
+                    _soData = AssetDatabase.LoadAssetAtPath<SOData>(
+                        AssetDatabase.GUIDToAssetPath("50b31bd74d19a40b293ceaeefd1c650e"));
+                    Debug.Log(_soData);
+                }
+                return _soData;
+            }
+        }
+        
+        // private const string GieziToolsCreateSOvariantChildKey = "Giezi.Tools.CreateSoVariant.Child";
+        // private const string GieziToolsCreateSOvariantParentKey = "Giezi.Tools.CreateSoVariant.Parent";
 
         [MenuItem("Assets/Create/Create SO Variant", false, 2000)]
         static void CreateSOVariant()
@@ -25,8 +42,11 @@ namespace Giezi.Tools
             AssetDatabase.CreateAsset(newAsset, newAssetPath);
             EditorUtility.SetDirty(newAsset);
             
-            PlayerPrefs.SetString(GieziToolsCreateSOvariantChildKey, newAssetPath);
-            PlayerPrefs.SetString(GieziToolsCreateSOvariantParentKey, assetPath);
+            // PlayerPrefs.SetString(GieziToolsCreateSOvariantChildKey, newAssetPath);
+            // PlayerPrefs.SetString(GieziToolsCreateSOvariantParentKey, assetPath);
+            SOData.SOVariantCreationData = new SOVariantCreationData((ScriptableObject) activeObject, newAsset);
+            
+            EditorUtility.SetDirty(SOData);
             
             AssetDatabase.SaveAssets();
             
@@ -44,27 +64,19 @@ namespace Giezi.Tools
         [UnityEditor.Callbacks.DidReloadScripts]
         static void SetParentAfterReload()
         {
-            if (!PlayerPrefs.HasKey(GieziToolsCreateSOvariantChildKey))
+            if(SOData.SOVariantCreationData == null || !SOData.SOVariantCreationData.CreateSoVariant)
                 return;
             
-            if(AssetImporter.GetAtPath(PlayerPrefs.GetString(GieziToolsCreateSOvariantChildKey)) == null)
-            {
-                Debug.Log("<color=orange>SOVariant: </color>Asset Importer does not exist yet, waiting for Unity to reload.");
+            if(SOData.SOVariantCreationData.Child == null)
                 return;
-            }
+
+            ScriptableObject parent = SOData.SOVariantCreationData.Parent;
+            ScriptableObject child = SOData.SOVariantCreationData.Child;
             
-            ScriptableObject parent =
-                AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    PlayerPrefs.GetString(GieziToolsCreateSOvariantParentKey));
-            
-            ScriptableObject child =
-                AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    PlayerPrefs.GetString(GieziToolsCreateSOvariantChildKey));
             
             SOVariantHelper<ScriptableObject>.SetParent(child, parent);
-            
-            PlayerPrefs.DeleteKey(GieziToolsCreateSOvariantParentKey);
-            PlayerPrefs.DeleteKey(GieziToolsCreateSOvariantChildKey);
+
+            SOData.SOVariantCreationData = null;
             
             Debug.Log($"<color=orange>SOVariant: </color>Created new SO Variant {child.name} with parent.");
         }
