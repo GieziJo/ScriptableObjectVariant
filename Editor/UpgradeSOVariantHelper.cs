@@ -37,7 +37,7 @@ namespace Giezi.Tools
             
             EditorUtility.SetDirty(_library);
             AssetDatabase.SaveAssets();
-            
+            AssetDatabase.Refresh();
         }
     }
 
@@ -155,7 +155,7 @@ namespace Giezi.Tools
 
         private static string GetSOVariantOldData(string data)
         {
-            string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantOldData"];
+            string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
             return dataJson;
         }
 
