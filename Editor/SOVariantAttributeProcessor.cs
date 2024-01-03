@@ -28,6 +28,7 @@ namespace Giezi.Tools
         public void Dispose()
         {
             this.Property.ValueEntry.OnChildValueChanged -= OnChildValueChange;
+            AssetDatabase.SaveAssets();
         }
 
         private SOVariant<T> _soVariant = null;
