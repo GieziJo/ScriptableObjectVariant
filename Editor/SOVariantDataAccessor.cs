@@ -6,8 +6,8 @@ namespace Giezi.Tools
 {
     public static class SOVariantDataAccessor
     {
-        private const string _SOVariantDataPath = "Assets/Editor/SOVariant/Editor/";
-        private const string _SOVariantDataAssetName = "SOVariantData.asset";
+        private const string _SOVariantDataPath = "Assets/Plugins/SOVariant/Editor/";
+        private const string _SOVariantDataAssetName = "SOVariantDataLibrary.asset";
         
         private static SOVariantDataLibrary _soVariantDataLibrary = null;
         
@@ -36,6 +36,7 @@ namespace Giezi.Tools
             Directory.CreateDirectory(_SOVariantDataPath);
             AssetDatabase.CreateAsset(soDataLibrary, _SOVariantDataPath+_SOVariantDataAssetName);
             // File.WriteAllText(_SOVariantDataPath+_SOVariantDataAssetName + ".meta", metdata);
+            File.WriteAllText(_SOVariantDataPath+"ch.giezi.tools.ScriptableObjectVariant.Library.Editor.asmdef", "{\"name\": \"ch.giezi.tools.ScriptableObjectVariant.Library.Editor\",\"rootNamespace\": \"\",\"references\": [],\"includePlatforms\": [\"Editor\"],\"excludePlatforms\": [],\"allowUnsafeCode\": false,\"overrideReferences\": false,\"precompiledReferences\": [],\"autoReferenced\": true,\"defineConstraints\": [],\"versionDefines\": [],\"noEngineReferences\": false}");
             EditorUtility.SetDirty(soDataLibrary);
             return soDataLibrary;
         }
