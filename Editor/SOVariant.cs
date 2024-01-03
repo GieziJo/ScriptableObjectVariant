@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,28 +20,21 @@ namespace Giezi.Tools
 {
     public class SOVariant<T> where T : ScriptableObject
     {
-        public T _parent = null;
         public T _target = null;
-        public AssetImporter _import = null;
-        public List<string> _overridden = null;
-        public List<string> _otherSerializationBackend = null;
-        public List<string> _children = null;
+        public SOVariantData _SoVariantData = null;
+        private SOVariantDataLibrary _library = SOVariantDataAccessor.SoVariantDataLibrary;
         
-        private bool _SOVariantProperlyLoaded = true;
-
-        public bool SoVariantProperlyLoaded => _SOVariantProperlyLoaded;
-
         public SOVariant(T targetObject)
         {
             LoadData(targetObject);
         }
-
+        
         public bool SetParent(T parent, bool setToParentData = true)
         {
             if (_target == null)
                 return false;
             
-
+        
             if (parent)
             {
                 if (parent.GetType() != _target.GetType())
@@ -50,61 +42,60 @@ namespace Giezi.Tools
                     Debug.Log("Only equal types can be selected as parent");
                     return false;
                 }
-
-                if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(_target))
+        
+                if (parent == _target)
                 {
                     Debug.Log("You can't select the same object as parent");
                     return false;
                 }
-
-                if (AssetDatabase.GetAssetPath(parent) == AssetDatabase.GetAssetPath(_parent))
+        
+                if (parent == _SoVariantData.Parent)
                 {
                     Debug.Log("Selected object is already target's parent");
                     return false;
                 }
             }
 
-            string targetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target));
-            if (_parent)
-                RemoveFromChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(_parent)), targetGUID);
-
-            this._parent = parent;
-            _overridden = new List<string>();
-
+            if (_SoVariantData.Parent)
+                RemoveFromChildrenData((T) _SoVariantData.Parent, _target);
+        
+            this._SoVariantData.Parent = parent;
+            _SoVariantData.Overridden = new List<string>();
+        
             if (parent)
             {
-                AddToChildrenData(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(parent)), targetGUID);
-
+                AddToChildrenData(parent, _target);
+        
                 if (setToParentData)
                     SetAllFieldsToParent();
                 else
                     InitialiseNewParentOverrides();
             }
-
-            SaveData(_overridden);
+        
+            SaveData(_SoVariantData.Overridden);
             return true;
         }
-
+        
         public void NotifyOverrideChangeInState(string name, bool isOverriden)
         {
-            if (!_parent)
+            if (!_SoVariantData.Parent)
             {
                 Debug.Log("<color>Parent needs to be defined first</color>");
                 return;
             }
-
+        
             if (isOverriden)
             {
-                if (!_overridden.Contains(name))
-                    _overridden.Add(name);
-
+                if (!_SoVariantData.Overridden.Contains(name))
+                    _SoVariantData.Overridden.Add(name);
+        
                 var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
-                var parentFieldInfo = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), name);
+                var parentFieldInfo = FieldInfoHelper.GetFieldRecursively(_SoVariantData.Parent.GetType(), name);
                 // handle copy of list/arrays
                 if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) &&
-                    targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_parent))
+                    targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_SoVariantData.Parent))
                 {
-                    object parentObject = parentFieldInfo.GetValue(_parent);
+                    object parentObject = parentFieldInfo.GetValue(_SoVariantData.Parent);
                     
                     var jsonSettings = new Newtonsoft.Json.JsonSerializerSettings()
                     {
@@ -118,168 +109,82 @@ namespace Giezi.Tools
             }
             else if (!isOverriden)
             {
-                if (_overridden.Contains(name))
-                    _overridden.Remove(name);
-
-                var parentValue = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), name).GetValue(_parent);
+                if (_SoVariantData.Overridden.Contains(name))
+                    _SoVariantData.Overridden.Remove(name);
+        
+                var parentValue = FieldInfoHelper.GetFieldRecursively(_SoVariantData.Parent.GetType(), name).GetValue(_SoVariantData.Parent);
                 var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
                 if (targetFieldInfo.GetValue(_target) != parentValue)
                     targetFieldInfo.SetValue(_target, parentValue);
             }
-
-            SaveData(_overridden);
+        
+            SaveData(_SoVariantData.Overridden);
         }
-
+        
         public void ChangeValue(string name, object value)
         {
-            if (_parent && !_overridden.Contains(name))
+            if (_SoVariantData.Parent && !_SoVariantData.Overridden.Contains(name))
                 Debug.Log("<color>Field is not overridden</color>");
-
+        
             var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
             if (targetFieldInfo.GetValue(_target) != value)
             {
                 targetFieldInfo.SetValue(_target, value);
-                SaveData(_overridden, new List<string>() {name});
+                SaveData(_SoVariantData.Overridden, new List<string>() {name});
             }
         }
-
+        
         public void LoadData(T targetObject)
         {
-            try
-            {
-                _target = targetObject;
-
-                string path = AssetDatabase.GetAssetPath(targetObject);
-                _import = AssetImporter.GetAtPath(path);
-            }
-            catch
-            {
-                return;
-            }
-
-            if (_target is null)
+            _target = targetObject;
+        
+            if (_target == null)
             {
                 Debug.Log("<color=red>SOVariant: Target is null</color>");
                 return;
             }
-
-            if (_import is null)
-            {
-                Debug.Log("<color=red>SOVariant: Import is null</color>");
-                return;
-            }
-
-            try
-            {
-                string data = _import.userData;
-                var extractedData = ExtractData(data);
-                _parent = extractedData.parent;
-                _overridden = extractedData.overridden ?? new List<string>();
-                _children = extractedData.children ?? new List<string>();
-            }
-            catch
-            {
-                _parent = null;
-                _overridden = new List<string>();
-                _children = new List<string>();
-            }
-        }
-
         
-        private (string parentGUID, T parent, List<string> overridden, List<string>children) ExtractData(string data)
-        {
-            if(!CheckForDataString(data))
-                return (null, null, null, null);
-            try
-            {
-                string dataJson = GetSOVariantData(data);
-                if(! CheckForDataString(dataJson))
-                    return (null, null, null, null);
-                Dictionary<string, string> containedData =
-                    JsonConvert.DeserializeObject<Dictionary<string, string>>(dataJson);
-
-                string parentGUID = containedData["parentGUID"];
-                
-                var parent = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(parentGUID));
-
-                var overridden = JsonConvert.DeserializeObject<List<string>>(containedData["overriddenFields"]);
-
-                var children = JsonConvert.DeserializeObject<List<string>>(containedData["childrenGUIDs"]);
-
-                return (parentGUID, parent, overridden, children);
-            }
-            catch
-            {
-                switch (EditorUtility.DisplayDialogComplex(
-                    "Import user data",
-                    $"While trying to load the SOVariant data object \"{_target}\", a previous UserData entry " +
-                    $"was found which can not be loaded into a Json file: \"{data}\", conflicting with " +
-                    $"loading the data at hand.\nWould you like to override it? " +
-                    $"(Aborting will prevent the modified SOVariant data to be selected)\n\n" +
-                    $"Note: you can try to manually change the data at the following path: \"{AssetDatabase.GetAssetPath(_target)}.meta\", and try again.\n\n" +
-                    $"It is also possible that you didn't update to the new version of the SOVariant package which handles the data as Json text instead of binary data " +
-                    $"and additionaly checks for conflicts. You can upgrade your data by going to: \"Tools/GieziTools/SOVariant/Upgrade user data to new version\" (in this case select \"No\" and perform the upgrade).",
-                    "Go ahead",
-                    "No",
-                    "Try again"))
-                {
-                    case (0):
-                        return (null, null, null, null);
-                    case (1):
-                        Debug.Log($"UserData not overwritten.");
-                        _SOVariantProperlyLoaded = false;
-                        return (null, null, null, null);;
-                    case (2):
-                        return ExtractData(ReadUpdatedMetaFile(data, AssetDatabase.GetAssetPath(_target), _import));
-                }
-            }
-            return (null, null, null, null);
+            _SoVariantData = ExtractData(_target);
         }
-
-        private static string GetSOVariantData(string data)
+        
+        
+        private SOVariantData ExtractData(T target)
         {
-            string dataJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(data)["SOVariantData"];
-            return dataJson;
+            return _library.GetSOVariantDataForTarget(target);
         }
-
-        private bool CheckForDataString(string data)
-        {
-            return !string.IsNullOrEmpty(data) ;
-        }
-
-        private void SetAllFieldsToParent()
-        {
-            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
-            {
-                object value = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
-                FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).SetValue(_target, value);
-            }
-        }
-
+        
         public void ResetAllFieldsToParentValue()
         {
-            List<string> oldOverrides = new List<string>(_overridden);
-            _overridden.Clear();
+            List<string> oldOverrides = new List<string>(_SoVariantData.Overridden);
+            _SoVariantData.Overridden.Clear();
             
             SetAllFieldsToParent();
             
-            SaveData(_overridden, oldOverrides);
+            SaveData(_SoVariantData.Overridden, oldOverrides);
         }
-
+        
+        private void SetAllFieldsToParent()
+        {
+            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_SoVariantData.Parent.GetType()))
+            {
+                object value = FieldInfoHelper.GetFieldRecursively(_SoVariantData.Parent.GetType(), fieldInfo.Name).GetValue(_SoVariantData.Parent);
+                FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).SetValue(_target, value);
+            }
+        }
+        
         private void InitialiseNewParentOverrides()
         {
-            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_parent.GetType()))
+            foreach (FieldInfo fieldInfo in FieldInfoHelper.GetAllFields(_SoVariantData.Parent.GetType()))
             {
-                object parentValue = FieldInfoHelper.GetFieldRecursively(_parent.GetType(), fieldInfo.Name).GetValue(_parent);
+                object parentValue = FieldInfoHelper.GetFieldRecursively(_SoVariantData.Parent.GetType(), fieldInfo.Name).GetValue(_SoVariantData.Parent);
                 object targetValue = FieldInfoHelper.GetFieldRecursively(_target.GetType(), fieldInfo.Name).GetValue(_target);
                 
                 if(parentValue != targetValue)
-                    _overridden.Add(fieldInfo.Name);
+                    _SoVariantData.Overridden.Add(fieldInfo.Name);
             }
         }
-
-        private void PropagateValuesToChildren(T target, string targetGUID, ref List<string> children,
-            AssetImporter importer, List<string> changedValues)
+        
+        private void PropagateValuesToChildren(T target, ref List<ScriptableObject> children, List<string> changedValues)
         {
             List<FieldInfo> fieldInfos = null;
             if (children.Count > 0)
@@ -296,41 +201,38 @@ namespace Giezi.Tools
                     }
                 }
             }
-
+        
             bool childrenUpdated = false;
-
-            foreach (string child in new List<string>(children))
+        
+            foreach (ScriptableObject child in new List<ScriptableObject>(children))
             {
-                string childPath = AssetDatabase.GUIDToAssetPath(child);
-                AssetImporter childImporter = AssetImporter.GetAtPath(childPath);
-                if (childImporter == null)
+                if (child == null)
                 {
                     children.Remove(child);
                     childrenUpdated = true;
                     continue;
                 }
-
-                var extractedData = ExtractData(childImporter.userData);
-
-                if (extractedData.parentGUID == null || extractedData.parent == null || extractedData.overridden == null ||
-                    extractedData.children == null)
+        
+                SOVariantData extractedData = ExtractData((T) child);
+        
+                if (extractedData.Parent == null || extractedData.Overridden == null ||
+                    extractedData.Children == null)
                 {
                     children.Remove(child);
                     childrenUpdated = true;
                     continue;
                 }
-
-                string parentGUID = extractedData.parentGUID;
-
-                if (parentGUID != targetGUID)
+        
+                ScriptableObject parent = extractedData.Parent;
+        
+                if (parent != target)
                 {
                     children.Remove(child);
                     childrenUpdated = true;
                     continue;
                 }
-
-                List<string> overridden = extractedData.overridden;
-                T childObject = AssetDatabase.LoadAssetAtPath<T>(childPath);
+        
+                List<string> overridden = extractedData.Overridden;
                 bool childChanged = false;
                 foreach (FieldInfo fieldInfo in fieldInfos)
                 {
@@ -338,171 +240,67 @@ namespace Giezi.Tools
                         continue;
                     object value = FieldInfoHelper.GetFieldRecursively(target.GetType(), fieldInfo.Name)
                         .GetValue(target);
-                    var childFieldInfo = FieldInfoHelper.GetFieldRecursively(childObject.GetType(), fieldInfo.Name);
-                    if (childFieldInfo.GetValue(childObject) != value)
+                    var childFieldInfo = FieldInfoHelper.GetFieldRecursively(child.GetType(), fieldInfo.Name);
+                    if (childFieldInfo.GetValue(child) != value)
                     {
-                        childFieldInfo.SetValue(childObject, value);
+                        childFieldInfo.SetValue(child, value);
                         childChanged = true;
                     }
                 }
-
+        
                 if (childChanged)
-                    EditorUtility.SetDirty(childObject);
-
-
-                List<string> newChildrenList = extractedData.children;
+                    EditorUtility.SetDirty(child);
+        
+        
+                List<ScriptableObject> newChildrenList = extractedData.Children;
                 if (newChildrenList.Count > 0)
-                    PropagateValuesToChildren(childObject, AssetDatabase.AssetPathToGUID(childPath),
-                        ref newChildrenList, importer, changedValues);
+                    PropagateValuesToChildren((T) child, ref newChildrenList, changedValues);
             }
-
+        
             if (childrenUpdated)
             {
-                WriteOnlyChildrenData(importer, children);
+                WriteOnlyChildrenData(target, children);
             }
         }
-
-        private void AddToChildrenData(AssetImporter importer, string newChild)
+        
+        private void AddToChildrenData(T parent, T newChild)
         {
-            var extractedData = ExtractData(importer.userData);
-
-            List<string> children = extractedData.children ?? new List<string>();
-            children.Add(newChild);
-            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
-        }
-
-        public void RemoveFromChildrenData(AssetImporter importer, string oldChild)
-        {
-            var extractedData = ExtractData(importer.userData);
-
-            List<string> children = extractedData.children ?? new List<string>();
+            var parentData = _library.GetSOVariantDataForTarget(parent);
             
-            children.Remove(oldChild);
-            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
+            parentData.Children.Add(newChild);
+            WriteToDictionary(parent, (T) parentData.Parent, parentData.Overridden, parentData.Children);
         }
-
-        private void WriteOnlyChildrenData(AssetImporter importer, List<string> children)
+        
+        public void RemoveFromChildrenData(T parent, T oldChild)
         {
-            var extractedData = ExtractData(importer.userData);
-            WriteToImporter(importer, SerializeParentData(extractedData.parent), SerializeOverrideData(extractedData.overridden), SerializeChildrenData(children));
+            var parentData = _library.GetSOVariantDataForTarget(parent);
+            
+            parentData.Children.Remove(oldChild);
+            WriteToDictionary(parent, (T) parentData.Parent, parentData.Overridden, parentData.Children);
         }
-
+        
+        private void WriteOnlyChildrenData(T target, List<ScriptableObject> children)
+        {
+            SOVariantData extractedData = _library.GetSOVariantDataForTarget(target);
+            WriteToDictionary(target, (T) extractedData.Parent, extractedData.Overridden, children);
+        }
+        
         public void SaveData(List<string> overriddenMembers, List<string> changedValues = null)
         {
-            if (_import == null)
-                return;
-
-            string overridesData = SerializeOverrideData(overriddenMembers);
-
-            string parentData = SerializeParentData(_parent);
-
-            PropagateValuesToChildren(_target, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_target)),
-                ref _children, _import, changedValues);
-
-            string childrenData = SerializeChildrenData(_children);
-
-            WriteToImporter(_import, parentData, overridesData, childrenData);
-
+            var children = new List<ScriptableObject>(_SoVariantData.Children);
+            PropagateValuesToChildren(_target, ref children, changedValues);
+         
+            WriteToDictionary(_target, (T) _SoVariantData.Parent, overriddenMembers, children);
+            
             EditorUtility.SetDirty(_target);
-            AssetDatabase.SaveAssets();
         }
-
-        private string SerializeChildrenData(List<string> children)
+        
+        private void WriteToDictionary(T target, T parent, List<string> overridden, List<ScriptableObject> children)
         {
-            return JsonConvert.SerializeObject(children);
-        }
-
-        private string SerializeParentData(T parent)
-        {
-            return AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(parent)).ToString();
-        }
-
-        private string SerializeOverrideData(List<string> overrides)
-        {
-            if (_otherSerializationBackend != null && _otherSerializationBackend.Count > 0 &&
-                overrides.All(s => s != _otherSerializationBackend.First()))
-                overrides.AddRange(_otherSerializationBackend);
-
-            return JsonConvert.SerializeObject(overrides);
-        }
-
-        private void WriteToImporter(AssetImporter importer, string parent, string overrideData, string children)
-        {
-            string data = JsonConvert.SerializeObject(new Dictionary<string, string>()
-            {
-                {"parentGUID", parent},
-                {"overriddenFields", overrideData},
-                {"childrenGUIDs", children}
-            });
-
-            if (CheckForUserDataAndOverride(importer, importer.userData, data))
-                importer.userData = JsonConvert.SerializeObject(new Dictionary<string, string>()
-                    {{"SOVariantData", data}});
-        }
-
-        private bool CheckForUserDataAndOverride(AssetImporter importer, string oldData, string newData)
-        {
-            if (!string.IsNullOrEmpty(oldData))
-            {
-                try
-                {
-                    JObject jObject = (JObject) JsonConvert.DeserializeObject(oldData);
-
-                    if (jObject == null)
-                        throw (null);
-
-                    if (jObject.ContainsKey("SOVariantData"))
-                        jObject["SOVariantData"] = newData;
-                    else
-                        jObject.Add("SOVariantData", newData);
-
-                    importer.userData = JsonConvert.SerializeObject(jObject);
-                    return false;
-                }
-                catch
-                {
-                    switch (EditorUtility.DisplayDialogComplex(
-                        "Replace user data",
-                        $"While trying to save the SOVariant object \"{importer.assetPath}\", a previous UserData entry " +
-                        $"was found which can not be loaded into a Json file: \"{importer.userData}\", conflicting with " +
-                        $"saving the data at hand.\nWould you like to override it? " +
-                        $"(Aborting will prevent the modified SOVariant data to be saved)\n\n" +
-                        $"Note: you can try to manually change the data at the following path: \"{importer.assetPath}.meta\", and try again.",
-                        "Go ahead",
-                        "No",
-                        "Try again"))
-                    {
-                        case (0):
-                            return true;
-                        case (1):
-                            Debug.Log($"UserData in File \"{importer.assetPath}.meta\" not overwritten.");
-                            return false;
-                        case (2):
-                            string newOldData = ReadUpdatedMetaFile(oldData, importer.assetPath, importer);
-                            return CheckForUserDataAndOverride(importer, newOldData, newData);
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private string ReadUpdatedMetaFile(string oldData, string targetPath, AssetImporter importer)
-        {
-            string[] lines = System.IO.File.ReadAllLines(targetPath + ".meta");
-            foreach (string line in lines)
-            {
-                if (line.StartsWith("  userData: "))
-                {
-                    var newLine = line.Substring(13);
-                    newLine = newLine.Substring(0, newLine.Length - 1);
-                    if (_import != null)
-                        _import.userData = newLine;
-                    return newLine;
-                }
-            }
-
-            return oldData;
+            if (target == null)
+                return;
+            
+            _library.WriteToLibrary(target, parent, overridden, children);
         }
     }
 }

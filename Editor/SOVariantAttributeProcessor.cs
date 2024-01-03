@@ -31,17 +31,17 @@ namespace Giezi.Tools
 
         void ParentSetter(T parent)
         {
-            if(!_soVariant.SetParent(parent, false))
+            if (!_soVariant.SetParent(parent, false))
                 return;
-            
-            _soVariant._overridden = null;
+
+            // _soVariant._SoVariantData.Overridden = null;
             Property.RefreshSetup();
         }
-    
+
 
         public override void ProcessMemberProperties(List<InspectorPropertyInfo> propertyInfos)
         {
-            if(!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
+            if (!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
                 return;
 
             if (!_selectionChangedFlag)
@@ -53,50 +53,43 @@ namespace Giezi.Tools
                 EditorApplication.playModeStateChanged += OnBeforeEnterPlayMode;
             }
 
-            if (_soVariant == null || _soVariant._overridden == null || _soVariant._import == null || _soVariant._children == null){
+            if (_soVariant == null || _soVariant._SoVariantData.Overridden == null ||
+                _soVariant._SoVariantData.Children == null)
+            {
                 _soVariant = new SOVariant<T>((T)Property.Tree.UnitySerializedObject.targetObject);
-                Debug.Log("still got here");
-                if (!_soVariant.SoVariantProperlyLoaded)
-                {
-                    Selection.selectionChanged -= OnSelectionChanged;
-                    _selectionChangedFlag = false;
-                    AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
-                    EditorApplication.playModeStateChanged -= OnBeforeEnterPlayMode;
-                    
-                    Selection.activeObject = null;
-                    
-                    return;
-                }
 
                 BoxGroupAttribute bxa = new BoxGroupAttribute("Scriptable Object Variant", true, false, 2);
 
-                if (_soVariant._parent != null)
+                if (_soVariant._SoVariantData.Parent != null)
                 {
-                    
-                    _soVariant._otherSerializationBackend = new List<string>();
+                    _soVariant._SoVariantData.OtherSerializationBackend = new List<string>();
                     foreach (InspectorPropertyInfo propertyInfo in new List<InspectorPropertyInfo>(propertyInfos))
                     {
                         if (propertyInfo.SerializationBackend == SerializationBackend.None)
                         {
-                            _soVariant._otherSerializationBackend.Add(propertyInfo.GetMemberInfo().Name);
+                            _soVariant._SoVariantData.OtherSerializationBackend.Add(propertyInfo.GetMemberInfo().Name);
                             continue;
                         }
 
                         CheckBoxAttribute checkBoxAttribute =
                             new CheckBoxAttribute(propertyInfo.GetMemberInfo().Name,
-                                _soVariant._overridden.Contains(propertyInfo.GetMemberInfo().Name),
-                                _soVariant._target, _soVariant._parent, _soVariant.NotifyOverrideChangeInState);
+                                _soVariant._SoVariantData.Overridden.Contains(propertyInfo.GetMemberInfo().Name),
+                                _soVariant._target, _soVariant._SoVariantData.Parent,
+                                _soVariant.NotifyOverrideChangeInState);
                         propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(bxa);
-                        
+                        // propertyInfo.GetMethodDelegate().
+                        // propertyInfo.GetMethodDelegate() += 
+                        // propertyInfo.GetGetterSetter()
+
                         // ! enable to debug
                         // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                     }
-                
+
                     propertyInfos.AddDelegate("Reset all values to Original", () =>
                     {
                         _soVariant.ResetAllFieldsToParentValue();
-                        _soVariant._overridden = null;
+                        _soVariant._SoVariantData.Overridden = null;
                         Property.RefreshSetup();
                     });
 
@@ -105,8 +98,8 @@ namespace Giezi.Tools
                     propertyInfos.RemoveAt(propertyInfos.Count - 1);
                     propertyButton.GetEditableAttributesList().Add(bxa);
                 }
-                
-                propertyInfos.AddValue("Original", () => _soVariant._parent, ParentSetter);
+
+                propertyInfos.AddValue("Original", () => (T)_soVariant._SoVariantData.Parent, ParentSetter);
 
                 InspectorPropertyInfo parentPropertyInfo = propertyInfos.Last();
                 propertyInfos.Insert(0, parentPropertyInfo);
@@ -132,8 +125,8 @@ namespace Giezi.Tools
             Selection.selectionChanged -= OnSelectionChanged;
             EditorApplication.playModeStateChanged -= OnBeforeEnterPlayMode;
             _selectionChangedFlag = false;
-            
-            _soVariant.SaveData(_soVariant._overridden);
+
+            _soVariant.SaveData(_soVariant._SoVariantData.Overridden);
         }
     }
 }
@@ -146,7 +139,8 @@ public class CheckBoxAttribute : Attribute
     public Object Target;
     public Action<string, bool> NotifyOverrideChange;
 
-    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent, Action<string, bool> notifyOverrideChange)
+    public CheckBoxAttribute(string name, bool isOverriden, Object target, Object parent,
+        Action<string, bool> notifyOverrideChange)
     {
         this.IsOverriden = isOverriden;
         this.Name = name;
@@ -156,7 +150,7 @@ public class CheckBoxAttribute : Attribute
     }
 }
 
-[DrawerPriority(0,0,3000)]
+[DrawerPriority(0, 0, 3000)]
 public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
 {
     protected override void DrawPropertyLayout(GUIContent label)
@@ -168,7 +162,7 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             GUI.enabled = true;
             return;
         }
-        
+
         FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Target.GetType(), Attribute.Name);
         FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
 
@@ -177,10 +171,10 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             this.CallNextDrawer(label);
             return;
         }
-        
-        
+
+
         GUILayout.BeginHorizontal();
-        
+
         Rect rect = EditorGUILayout.GetControlRect();
         Rect subRect = new Rect(rect);
         if (Attribute.IsOverriden)
@@ -191,29 +185,30 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             this.Attribute.NotifyOverrideChange(this.Attribute.Name, newIsOverriden);
             this.Attribute.IsOverriden = newIsOverriden;
         }
-        
+
         GUIContent noLabel = new GUIContent(label);
         noLabel.text = "";
         if (this.Attribute.IsOverriden)
         {
             object value = parentFieldInfo.GetValue(Attribute.Parent);
             Object unityObject = value as Object;
-            string parentFieldName = (unityObject != null) ? unityObject.name : (value != null ? value.ToString() : "None"); 
-            
-        
-            Rect labelRect = new Rect(rect.Split(1,2));
-        
+            string parentFieldName =
+                (unityObject != null) ? unityObject.name : (value != null ? value.ToString() : "None");
+
+
+            Rect labelRect = new Rect(rect.Split(1, 2));
+
             GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-            labelStyle.normal.textColor = new Color(.5f,.5f,.5f);
+            labelStyle.normal.textColor = new Color(.5f, .5f, .5f);
             labelStyle.alignment = TextAnchor.MiddleRight;
-        
+
             EditorGUI.LabelField(labelRect, parentFieldName, labelStyle);
         }
-        
+
         GUI.enabled = Attribute.IsOverriden;
         this.CallNextDrawer(noLabel);
         GUI.enabled = true;
-        
+
         GUILayout.EndHorizontal();
     }
 }
