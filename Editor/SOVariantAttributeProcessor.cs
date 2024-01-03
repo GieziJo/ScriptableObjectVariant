@@ -23,9 +23,13 @@ using Object = UnityEngine.Object;
 
 namespace Giezi.Tools
 {
-    public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T> where T : ScriptableObject
+    public class SOVariantAttributeProcessor<T> : OdinPropertyProcessor<T>, IDisposable where T : ScriptableObject
     {
-        private bool _selectionChangedFlag = false;
+        public void Dispose()
+        {
+            this.Property.ValueEntry.OnChildValueChanged -= OnChildValueChange;
+        }
+
         private SOVariant<T> _soVariant = null;
 
 
@@ -43,15 +47,6 @@ namespace Giezi.Tools
         {
             if (!Property.Attributes.Select(attribute => attribute.GetType()).Contains(typeof(SOVariantAttribute)))
                 return;
-
-            if (!_selectionChangedFlag)
-            {
-                Selection.selectionChanged += OnSelectionChanged;
-                _selectionChangedFlag = true;
-
-                AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReloads;
-                EditorApplication.playModeStateChanged += OnBeforeEnterPlayMode;
-            }
 
             if (_soVariant == null || _soVariant._SoVariantData.Overridden == null ||
                 _soVariant._SoVariantData.Children == null)
@@ -78,13 +73,11 @@ namespace Giezi.Tools
                                 _soVariant.NotifyOverrideChangeInState);
                         propertyInfo.GetEditableAttributesList().Add(checkBoxAttribute);
                         propertyInfo.GetEditableAttributesList().Add(bxa);
-                        // propertyInfo.GetMethodDelegate().
-                        // propertyInfo.GetMethodDelegate() += 
-                        // propertyInfo.GetGetterSetter()
 
                         // ! enable to debug
                         // propertyInfo.GetEditableAttributesList().Add(new ShowDrawerChainAttribute());
                     }
+
 
                     propertyInfos.AddDelegate("Reset all values to Original", () =>
                     {
@@ -107,25 +100,14 @@ namespace Giezi.Tools
 
                 parentPropertyInfo.GetEditableAttributesList().Add(new PropertyOrderAttribute(-1));
                 parentPropertyInfo.GetEditableAttributesList().Add(new PropertySpaceAttribute(0, 10));
+                
+                if (_soVariant._SoVariantData.Children is { Count: > 0 })
+                    this.Property.ValueEntry.OnChildValueChanged += OnChildValueChange;
             }
         }
 
-        private void OnBeforeAssemblyReloads() => OnSelectionChanged();
-
-        private void OnBeforeEnterPlayMode(PlayModeStateChange playModeStateChange)
+        private void OnChildValueChange(int obj)
         {
-            if (playModeStateChange == PlayModeStateChange.ExitingEditMode)
-                OnSelectionChanged();
-        }
-
-
-        private void OnSelectionChanged()
-        {
-            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReloads;
-            Selection.selectionChanged -= OnSelectionChanged;
-            EditorApplication.playModeStateChanged -= OnBeforeEnterPlayMode;
-            _selectionChangedFlag = false;
-
             _soVariant.SaveData(_soVariant._SoVariantData.Overridden);
         }
     }
