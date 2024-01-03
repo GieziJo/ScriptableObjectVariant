@@ -1,5 +1,4 @@
 using System.IO;
-using Sirenix.OdinInspector;
 using UnityEditor;
 
 namespace Giezi.Tools

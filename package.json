@@ -13,6 +13,9 @@
         "ScriptableObject",
         "Variant"
     ],
+    "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.0"
+    },
     "category": "Editor",
     "type": "Editor"
 }
