@@ -145,18 +145,19 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             GUI.enabled = true;
             return;
         }
-
+        
         FieldInfo targetFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Target.GetType(), Attribute.Name);
         FieldInfo parentFieldInfo = FieldInfoHelper.GetFieldRecursively(Attribute.Parent.GetType(), Attribute.Name);
-
+        
         if (targetFieldInfo is null || parentFieldInfo is null)
         {
             this.CallNextDrawer(label);
             return;
         }
 
-
-        GUILayout.BeginHorizontal();
+        // if (targetFieldInfo.FieldType.Name == "String" || targetFieldInfo.FieldType.IsPrimitive)
+        if (targetFieldInfo.FieldType.BaseType != typeof(System.Object))
+            GUILayout.BeginHorizontal();
 
         Rect rect = EditorGUILayout.GetControlRect();
         Rect subRect = new Rect(rect);
@@ -177,21 +178,22 @@ public class CheckBoxDrawer : OdinAttributeDrawer<CheckBoxAttribute>
             Object unityObject = value as Object;
             string parentFieldName =
                 (unityObject != null) ? unityObject.name : (value != null ? value.ToString() : "None");
-
-
+        
+        
             Rect labelRect = new Rect(rect.Split(1, 2));
-
+            
             GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
             labelStyle.normal.textColor = new Color(.5f, .5f, .5f);
             labelStyle.alignment = TextAnchor.MiddleRight;
-
+            
             EditorGUI.LabelField(labelRect, parentFieldName, labelStyle);
         }
 
         GUI.enabled = Attribute.IsOverriden;
         this.CallNextDrawer(noLabel);
         GUI.enabled = true;
-
-        GUILayout.EndHorizontal();
+        
+        if (targetFieldInfo.FieldType.BaseType != typeof(System.Object))
+            GUILayout.EndHorizontal();
     }
 }

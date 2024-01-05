@@ -92,8 +92,10 @@ namespace Giezi.Tools
                 var targetFieldInfo = FieldInfoHelper.GetFieldRecursively(_target.GetType(), name);
                 var parentFieldInfo = FieldInfoHelper.GetFieldRecursively(_SoVariantData.Parent.GetType(), name);
                 // handle copy of list/arrays
-                if (typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) &&
-                    targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_SoVariantData.Parent))
+                if ((typeof(IEnumerable).IsAssignableFrom(targetFieldInfo.FieldType) &&
+                     targetFieldInfo.GetValue(_target) == parentFieldInfo.GetValue(_SoVariantData.Parent))
+                    || targetFieldInfo.FieldType.BaseType == typeof(System.Object)
+                    )
                 {
                     object parentObject = parentFieldInfo.GetValue(_SoVariantData.Parent);
                     
