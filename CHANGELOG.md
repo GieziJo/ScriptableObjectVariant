@@ -1,3 +1,14 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [2.0.1](https://github.com/GieziJo/ScriptableObjectVariant/compare/v2.0.0...v2.0.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* check for null reference on selection ([0596071](https://github.com/GieziJo/ScriptableObjectVariant/commit/0596071f7a83a517ac85c163da5bf0bcc3de4a79))
+
 #### 2.0.0 (2025-10-07)
 
 # Changelog
@@ -38,5 +49,3 @@ All notable changes to this project will be documented in this file. See [standa
 # Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
-
-

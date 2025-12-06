@@ -5,7 +5,7 @@
         "name": "Jo Giezi",
         "url": "https://github.com/GieziJo/ScriptableObjectVariant"
     },
-    "version": "2.0.0",
+    "version": "2.0.1",
     "unity": "2022.3",
     "description": "Adds a field to any scriptable object tagged with the [SOVariant] attribute that lets you select a parent and override selected fields in the child object.",
     "keywords": [
